@@ -1,0 +1,81 @@
+.root {
+  padding: 32px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  color: var(--text);
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--subtext);
+  margin-top: 6px;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.searchWrap {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+
+.searchInput,
+.statusSelect {
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.searchInput {
+  width: 100%;
+  padding-left: 42px;
+}
+
+.statusSelect {
+  min-width: 180px;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--muted);
+}
+
+.emptyText {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+}

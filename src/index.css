@@ -1,0 +1,66 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --card: #f6faff;
+  --border: #cfe2f5;
+  --accent: #1e5799;
+  --accent2: #7db9e8;
+  --green: #16a34a;
+  --amber: #f59e0b;
+  --blue: #1d4ed8;
+  --purple: #60a5fa;
+  --muted: #6b7f95;
+  --text: #0f2a47;
+  --subtext: #3f5f80;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+}
+
+input[type=range] {
+  accent-color: var(--accent);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #eef5ff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9dc3ea;
+  border-radius: 3px;
+}

@@ -1,0 +1,157 @@
+.nav {
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 16px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.brand {
+  margin-bottom: 36px;
+  padding-left: 8px;
+}
+
+.brandTop,
+.brandBottom {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.brandTop {
+  color: var(--text);
+}
+
+.brandBottom {
+  color: var(--accent);
+}
+
+.logo {
+  width: 180px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.userName {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.roleSwitch {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roleBtn {
+  padding: 7px 12px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  background: transparent;
+  color: var(--subtext);
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.roleBtnActive {
+  background: var(--accent);
+  color: #fff;
+}
+
+.navItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  background: transparent;
+  color: var(--subtext);
+  transition: all 0.2s;
+  text-align: left;
+  border-left: 3px solid transparent;
+}
+
+.navBtnActive {
+  background: rgba(30, 87, 153, 0.12);
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.pipeline {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.pipelineTitle {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--subtext);
+}
+
+.statValue {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.logout {
+  width: 100%;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}

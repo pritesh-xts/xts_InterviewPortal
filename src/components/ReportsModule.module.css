@@ -1,0 +1,111 @@
+.root {
+  padding: 32px;
+}
+
+.title {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  color: var(--text);
+  margin: 0 0 32px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.value {
+  font-size: 32px;
+  font-weight: 800;
+  font-family: 'Syne', sans-serif;
+  margin: 8px 0 0;
+}
+
+.pipelineBox {
+  margin-top: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.pipelineTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  margin: 0 0 20px;
+}
+
+.row {
+  margin-bottom: 12px;
+}
+
+.rowHead {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.rowLabel {
+  font-size: 13px;
+  color: var(--subtext);
+}
+
+.rowValue {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.barTrack {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* p-new css */
+/* ===== REPORT TABLE DESIGN ===== */
+
+.reportTable {
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+/* Header */
+.reportTable thead th {
+  background:  #39bdf1;
+  color: white;
+  border: none;
+  padding: 14px;
+}
+
+/* Alternate rows */
+.reportTable tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.reportTable tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
