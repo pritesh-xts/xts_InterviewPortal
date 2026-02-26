@@ -60,7 +60,6 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
   const status = c.Status_description || c.status || 'Pending';
 
   // Only HR / Admin can change status
-  // const isHR = user && (user.roleId == 1 || user.roleId == 4);
   const roleId = Number(user?.roleId || user?.Role_id);
 const isHR = roleId === 1 || roleId === 4;
 const showDropdown =
