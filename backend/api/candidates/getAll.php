@@ -8,7 +8,13 @@ $roleId = isset($_GET['roleId']) ? intval($_GET['roleId']) : 0;
 $userId = isset($_GET['userId']) ? intval($_GET['userId']) : 0;
 
 try {
-    $query = "SELECT c.*, s.Status_description
+    $query = "SELECT c.*, s.Status_description,
+              (SELECT i.Invite_response 
+               FROM tbl_interview_details i 
+               WHERE i.Candidate_id = c.Candidate_id 
+               AND i.Isactive = 1 
+               ORDER BY i.Interview_id DESC 
+               LIMIT 1) as Latest_invite_response
               FROM mst_candidates c
               LEFT JOIN mst_application_status s ON c.Current_status = s.Status_id
               WHERE c.Isactive = 1";

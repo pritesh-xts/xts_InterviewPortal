@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once '../helpers/email.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -42,17 +43,9 @@ try {
         $stmt->bindParam(":interviewId", $activeInterview['Interview_id']);
         $stmt->execute();
     } else {
-        // Fallback for legacy rows where no active interview exists.
-        $insertQuery = "INSERT INTO tbl_interview_details 
-                        (Candidate_id, Status_id, Feedback_by, Feedback, Location, Isactive) 
-                        VALUES (:candidateId, :statusId, :feedbackBy, :feedback, :location, 1)";
-        $stmt = $db->prepare($insertQuery);
-        $stmt->bindParam(":candidateId", $data->candidateId);
-        $stmt->bindParam(":statusId", $data->statusId);
-        $stmt->bindParam(":feedbackBy", $data->feedbackBy);
-        $stmt->bindParam(":feedback", $data->feedback);
-        $stmt->bindParam(":location", $location);
-        $stmt->execute();
+        $db->rollBack();
+        echo json_encode(["success" => false, "message" => "No active interview found for this candidate"]);
+        exit();
     }
     
     $query2 = "UPDATE mst_candidates SET Current_status = :statusId WHERE Candidate_id = :candidateId";
@@ -61,7 +54,36 @@ try {
     $stmt2->bindParam(":candidateId", $data->candidateId);
     $stmt2->execute();
     
+    // Get candidate details for email notification
+    $candidateQuery = "SELECT Candidate_name, Candidate_email, Candidate_position FROM mst_candidates WHERE Candidate_id = :candidateId";
+    $candidateStmt = $db->prepare($candidateQuery);
+    $candidateStmt->bindParam(":candidateId", $data->candidateId);
+    $candidateStmt->execute();
+    $candidate = $candidateStmt->fetch(PDO::FETCH_ASSOC);
+    
     $db->commit();
+
+    // Send email notification to candidate based on status
+    $emailResult = null;
+    if ($candidate) {
+        $statusId = intval($data->statusId);
+        $candidateEmail = trim($candidate['Candidate_email']);
+        $candidateName = trim($candidate['Candidate_name']);
+        $position = trim($candidate['Candidate_position']);
+        
+        // Only send rejection emails immediately
+        // L1 Clear email will be sent when HR schedules L2
+        if ($statusId === 2) {
+            // L1 Reject
+            $emailResult = sendCandidateL1RejectEmail($candidateEmail, $candidateName, $position);
+        } elseif ($statusId === 4) {
+            // L2 Clear
+            $emailResult = sendCandidateL2ClearEmail($candidateEmail, $candidateName, $position);
+        } elseif ($statusId === 5) {
+            // L2 Reject
+            $emailResult = sendCandidateL1RejectEmail($candidateEmail, $candidateName, $position);
+        }
+    }
 
     echo json_encode([
         "success" => true,

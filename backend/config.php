@@ -17,12 +17,12 @@ define('HR_EMAIL', 'rjadhav@xtsworld.in'); // Change this to HR email address
 
 // App URL used in email links
 if (!defined('APP_BASE_URL')) {
-    define('APP_BASE_URL', 'http://localhost:3000/');
+    define('APP_BASE_URL', 'http://localhost:8000/');
 }
 
 // Frontend URL for password reset
 if (!defined('FRONTEND_URL')) {
-    define('FRONTEND_URL', 'http://localhost:3000/');
+    define('FRONTEND_URL', 'http://localhost:5173/');
 }
 
 // Secret for signing invite action tokens (change in production)

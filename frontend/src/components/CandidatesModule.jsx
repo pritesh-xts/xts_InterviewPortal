@@ -9,7 +9,7 @@ import { getStatuses } from '../api/InterviewPortalApis';
 import s from './CandidatesModule.module.css';
 import { API_BASE } from '../api/InterviewPortalApis';
 
-export default function CandidatesModule({ candidates, activeRole, onAddCandidate, user }) {
+export default function CandidatesModule({ candidates, activeRole, onAddCandidate, user, onRefresh }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
@@ -147,7 +147,7 @@ const handleStatusChange = async (candidateId, statusId) => {
           candidate={scheduleCandidate}
         />
       )}
-      {selected && <CandidateModal candidate={selected} onClose={() => setSelected(null)} activeRole={activeRole} user={user} />}
+      {selected && <CandidateModal candidate={selected} onClose={() => { setSelected(null); onRefresh && onRefresh(); }} activeRole={activeRole} user={user} />}
     </div>
   );
 }

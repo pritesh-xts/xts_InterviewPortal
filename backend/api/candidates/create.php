@@ -84,6 +84,22 @@ try {
                 $dateTime,
                 $location
             );
+            
+            // Send email to candidate
+            $candidateEmail = trim((string)$data->email);
+            if (filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
+                $candidateEmailResult = sendCandidateInterviewEmail(
+                    $candidateEmail,
+                    $candidateName,
+                    $candidatePosition,
+                    $dateTime,
+                    $location,
+                    $panelName
+                );
+                if (!$candidateEmailResult['success']) {
+                    error_log('Candidate email failed: ' . $candidateEmailResult['message']);
+                }
+            }
         } else {
             $emailNotification = [
                 'success' => false,

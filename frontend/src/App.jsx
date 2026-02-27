@@ -149,7 +149,7 @@ function App() {
         onChangePassword={() => setShowChangePassword(true)}
       />
       <main className={s.main}>
-        {page == 'candidates' && <CandidatesModule candidates={candidates} activeRole={activeRole} onAddCandidate={handleAdd} user={user} />}
+        {page == 'candidates' && <CandidatesModule candidates={candidates} activeRole={activeRole} onAddCandidate={handleAdd} user={user} onRefresh={fetchCandidates} />}
         {page == 'reports' && <ReportsModule candidates={candidates} />}
         {page == 'users' && user.roleId === 4 && <UserManagement />}
       </main>

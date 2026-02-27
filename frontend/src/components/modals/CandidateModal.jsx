@@ -470,6 +470,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const location = interview?.Location || '—';
   const panelName = interview?.Panel_name || '—';
   const history = Array.isArray(data.history) ? data.history : [];
+  const historyLoaded = candidateDetails !== null;
   const currentUserId = String(user?.id || user?.User_id || '');
   const isPanelUser = Number(user?.roleId || user?.Role_id) === 2;
   const panelScheduledRounds = history.filter(
@@ -512,7 +513,22 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const isAdmin = Number(user?.roleId || user?.Role_id) === 4;
   const hrAllowedStatusIds = new Set([7, 8, 9]);
   const hrStatuses = statuses.filter(st => hrAllowedStatusIds.has(Number(st.Status_id)));
-  const panelStatuses = statuses.filter(st => !hrAllowedStatusIds.has(Number(st.Status_id)));
+  
+  // Filter panel statuses based on current interview round
+  const currentStatus = Number(data.Current_status || c.Current_status);
+  let panelStatuses = [];
+  
+  if (currentStatus === 8) {
+    // L1 Interview - Show only L1 statuses (1, 2, 3)
+    panelStatuses = statuses.filter(st => [1, 2, 3].includes(Number(st.Status_id)));
+  } else if (currentStatus === 9) {
+    // L2 Interview - Show only L2 statuses (4, 5, 6)
+    panelStatuses = statuses.filter(st => [4, 5, 6].includes(Number(st.Status_id)));
+  } else {
+    // Fallback - show all non-HR statuses
+    panelStatuses = statuses.filter(st => !hrAllowedStatusIds.has(Number(st.Status_id)));
+  }
+  
   const hrVisibleStatuses = isAdmin ? statuses : (hrStatuses.length > 0 ? hrStatuses : statuses);
   const hrStatusOptions = hrVisibleStatuses.map(st => ({ value: st.Status_id, label: st.Status_description }));
   const panelVisibleStatuses = isAdmin ? statuses : (panelStatuses.length > 0 ? panelStatuses : statuses);
@@ -699,6 +715,37 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
         {tab == 'feedback' && showTabs && (
           <div>
             <h3 className={s.sectionTitle}>Submit Feedback</h3>
+            
+            {/* Show L1 feedback for L2 panels */}
+            {currentStatus === 9 && historyLoaded && (
+              <div className={s.l1FeedbackBox}>
+                <h4 className={s.l1FeedbackTitle}>L1 Interview Feedback</h4>
+                {(() => {
+                  const l1Feedbacks = history.filter(h => {
+                    const statusId = Number(h.Status_id);
+                    const hasFeedback = String(h.Feedback || '').trim().length > 0;
+                    return [1, 2, 3].includes(statusId) && hasFeedback;
+                  });
+                  
+                  if (l1Feedbacks.length === 0) {
+                    return <p className={s.line}>No L1 feedback submitted yet.</p>;
+                  }
+                  
+                  return l1Feedbacks.map((l1Entry, idx) => (
+                    <div key={idx} className={s.l1FeedbackCard}>
+                      <div className={s.l1FeedbackGrid}>
+                        <p className={s.line}><strong className={s.strong}>Status:</strong> {l1Entry.Interview_status || '-'}</p>
+                        <p className={s.line}><strong className={s.strong}>Panel:</strong> {l1Entry.Panel_name || '-'}</p>
+                        <p className={s.line}><strong className={s.strong}>Date:</strong> {l1Entry.DateTime ? formatISTDate(l1Entry.DateTime) : '-'}</p>
+                        <p className={s.line}><strong className={s.strong}>Time:</strong> {l1Entry.DateTime ? formatISTTime(l1Entry.DateTime) : '-'}</p>
+                        <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {l1Entry.Feedback}</p>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+            
             {panelFeedbackLocked ? (
               <div className={s.feedbackBox}>
                 <div className={s.notesWrap}>

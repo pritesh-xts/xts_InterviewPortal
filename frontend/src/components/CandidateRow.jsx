@@ -59,12 +59,30 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
 
   const status = c.Status_description || c.status || 'Pending';
 
-  // Only HR / Admin can change status
-  // const isHR = user && (user.roleId == 1 || user.roleId == 4);
   const roleId = Number(user?.roleId || user?.Role_id);
   const isHR = roleId === 1 || roleId === 4;
+  const isPanel = roleId === 2;
+  
+  // Check if latest interview invite was rejected
+  const inviteRejected = c.Latest_invite_response === 'rejected';
+  
+  // HR can change status for L2 Clear/On Hold after L2 to Selected/Rejected
   const showDropdown = isHR && (c.Current_status === 4 || c.Current_status === 6);
-  const showScheduleBtn = isHR && c.Current_status === 7;
+  
+  // HR can schedule L1 for Pending candidates (Status 7)
+  // HR can schedule L2 for L1 Clear candidates (Status 1)
+  // HR can reschedule if panel rejected the invite
+  const showScheduleBtn = isHR && (c.Current_status === 7 || c.Current_status === 1 || inviteRejected);
+  
+  let scheduleBtnLabel = 'Schedule L1';
+  if (inviteRejected) {
+    scheduleBtnLabel = c.Current_status === 8 ? 'Reschedule L1' : 'Reschedule L2';
+  } else if (c.Current_status === 1) {
+    scheduleBtnLabel = 'Schedule L2';
+  }
+  
+  // Panel sees candidates with L1/L2 Interview Confirmed status
+  const isPanelInterview = isPanel && (c.Current_status === 8 || c.Current_status === 9);
   const handleStatusClick = (e) => {
     e.stopPropagation(); // prevent popup open
     if (isHR) {
@@ -113,7 +131,7 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
               onSchedule && onSchedule(c);
             }}
           >
-            Schedule
+            {scheduleBtnLabel}
           </button>
         )}
        <div className={s.statusWrapper}>
@@ -134,7 +152,13 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
       <option value={5}>Rejected</option>
     </select>
   ) : (
-    <span className={s.status}>{status}</span>
+    <>
+      {inviteRejected ? (
+        <span className={s.rejectedBadge} title="Panel rejected interview invite">⚠ Panel Rejected - Needs Reschedule</span>
+      ) : (
+        <span className={s.status}>{status}</span>
+      )}
+    </>
   )}
 </div>
 

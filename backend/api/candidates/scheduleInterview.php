@@ -14,7 +14,7 @@ if (!isset($data->candidateId) || !isset($data->date) || !isset($data->time) || 
 
 try {
     // Get candidate details
-    $candidateQuery = "SELECT Candidate_name, Candidate_position FROM mst_candidates WHERE Candidate_id = :candidateId";
+    $candidateQuery = "SELECT Candidate_name, Candidate_position, Candidate_email, Current_status FROM mst_candidates WHERE Candidate_id = :candidateId";
     $candidateStmt = $db->prepare($candidateQuery);
     $candidateStmt->bindParam(":candidateId", $data->candidateId);
     $candidateStmt->execute();
@@ -42,21 +42,32 @@ try {
     // Create interview datetime
     $interviewDateTime = $data->date . ' ' . $data->time . ':00';
     
+    // Determine interview status based on current candidate status
+    $currentStatus = intval($candidate['Current_status'] ?? 0);
+    $interviewStatus = 8; // Default: L1 Interview Confirmed
+    
+    if ($currentStatus === 1) {
+        // Candidate has L1 Clear, so this is L2 scheduling
+        $interviewStatus = 9; // L2 Interview Confirmed
+    }
+    
     // Insert interview record
     $insertQuery = "INSERT INTO tbl_interview_details (Candidate_id, Feedback_by, Status_id, DateTime, Location, Feedback, Isactive) 
-                    VALUES (:candidateId, :panelId, 8, :datetime, :location, '', 1)";
+                    VALUES (:candidateId, :panelId, :statusId, :datetime, :location, '', 1)";
     $insertStmt = $db->prepare($insertQuery);
     $insertStmt->bindParam(":candidateId", $data->candidateId);
     $insertStmt->bindParam(":panelId", $data->panel);
+    $insertStmt->bindParam(":statusId", $interviewStatus);
     $insertStmt->bindParam(":datetime", $interviewDateTime);
     $insertStmt->bindParam(":location", $data->location);
     $insertStmt->execute();
     
     $interviewId = $db->lastInsertId();
     
-    // Update candidate status to "Interview Scheduled" (status 8)
-    $updateQuery = "UPDATE mst_candidates SET Current_status = 8 WHERE Candidate_id = :candidateId";
+    // Update candidate status to match interview status
+    $updateQuery = "UPDATE mst_candidates SET Current_status = :statusId WHERE Candidate_id = :candidateId";
     $updateStmt = $db->prepare($updateQuery);
+    $updateStmt->bindParam(":statusId", $interviewStatus);
     $updateStmt->bindParam(":candidateId", $data->candidateId);
     $updateStmt->execute();
     
@@ -72,12 +83,34 @@ try {
         $data->location
     );
     
+    // Send email to candidate
+    $candidateEmailResult = sendCandidateInterviewEmail(
+        $candidate['Candidate_email'],
+        $candidate['Candidate_name'],
+        $candidate['Candidate_position'],
+        $interviewDateTime,
+        $data->location,
+        $panel['User_name']
+    );
+    
+    // If this was L2 scheduling (status changed from 1 to 9)
+    // Send L1 Clear congratulations email before L2 interview details
+    if ($currentStatus === 1) {
+        // Send L1 Clear email
+        $l1ClearEmail = sendCandidateL1ClearEmail(
+            $candidate['Candidate_email'],
+            $candidate['Candidate_name'],
+            $candidate['Candidate_position']
+        );
+    }
+    
     echo json_encode([
         "success" => true,
         "message" => "Interview scheduled successfully",
         "data" => [
             "interviewId" => $interviewId,
-            "emailSent" => $emailResult['success']
+            "panelEmailSent" => $emailResult['success'],
+            "candidateEmailSent" => $candidateEmailResult['success']
         ]
     ]);
 } catch(PDOException $e) {

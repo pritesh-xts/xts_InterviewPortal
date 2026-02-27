@@ -428,6 +428,81 @@ function sendUserCredentialsEmail(string $email, string $name, string $password)
     }
 }
 
+function sendCandidateInterviewEmail(
+    string $candidateEmail,
+    string $candidateName,
+    string $position,
+    string $interviewDateTime,
+    string $location,
+    string $panelName
+): array {
+    $errorMessage = null;
+    $mail = buildMailer($errorMessage);
+    if (!$mail) {
+        return [
+            'success' => false,
+            'message' => 'Unable to initialize mailer: ' . ($errorMessage ?: 'Unknown error')
+        ];
+    }
+
+    if (!filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid candidate email address'
+        ];
+    }
+
+    try {
+        $tz = new DateTimeZone(defined('APP_TIMEZONE') ? (string)APP_TIMEZONE : 'Asia/Kolkata');
+        $startDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $interviewDateTime, $tz) ?: new DateTime('now', $tz);
+        $dateLabel = $startDateTime->format('d M Y');
+        $timeLabel = $startDateTime->format('h:i A') . ' IST';
+
+        $mail->addAddress($candidateEmail);
+        $mail->Subject = 'Interview Scheduled - ' . $position;
+        $mail->isHTML(true);
+        $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
+            . '<tr><td align="center">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="620" style="max-width:620px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">'
+            . '<tr><td style="background:#0f172a;padding:22px 24px;">'
+            . '<div style="font-size:12px;letter-spacing:1px;color:#93c5fd;text-transform:uppercase;">Interview Hub</div>'
+            . '<div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;margin-top:8px;">Interview Scheduled</div>'
+            . '</td></tr>'
+            . '<tr><td style="padding:24px;">'
+            . '<p style="margin:0 0 14px 0;font-size:15px;line-height:22px;">Dear <strong>' . htmlspecialchars($candidateName) . '</strong>,</p>'
+            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">Your interview has been scheduled. Please find the details below:</p>'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;">'
+            . '<tr><td style="padding:14px 16px;font-size:13px;line-height:24px;">'
+            . '<div><span style="color:#6b7280;">Position:</span> <strong>' . htmlspecialchars($position) . '</strong></div>'
+            . '<div><span style="color:#6b7280;">Date:</span> ' . htmlspecialchars($dateLabel) . '</div>'
+            . '<div><span style="color:#6b7280;">Time:</span> ' . htmlspecialchars($timeLabel) . '</div>'
+            . '<div><span style="color:#6b7280;">Location:</span> ' . htmlspecialchars($location) . '</div>'
+            . '</td></tr>'
+            . '</table>'
+            . '<p style="margin:18px 0 0 0;font-size:13px;line-height:20px;color:#374151;">Please be on time and prepare accordingly. We wish you all the best!</p>'
+            . '</td></tr>'
+            . '<tr><td style="border-top:1px solid #e5e7eb;padding:14px 24px;font-size:12px;color:#6b7280;">Interview Hub</td></tr>'
+            . '</table>'
+            . '</td></tr></table>'
+            . '</body></html>';
+
+        $mail->AltBody = "Dear {$candidateName},\n\n"
+            . "Your interview has been scheduled.\n\n"
+            . "Position: {$position}\n"
+            . "Interview Date: {$dateLabel}\n"
+            . "Interview Time: {$timeLabel}\n"
+            . "Location: {$location}\n\n"
+            . "Please be on time and prepare accordingly. We wish you all the best!\n\n"
+            . "Best regards,\nInterview Hub";
+
+        $mail->send();
+        return ['success' => true, 'message' => 'Candidate email sent successfully'];
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Email failed: ' . $mail->ErrorInfo];
+    }
+}
+
 function sendPasswordResetEmail(string $email, string $name, string $token): bool
 {
     $errorMessage = null;
@@ -481,5 +556,187 @@ function sendPasswordResetEmail(string $email, string $name, string $token): boo
         return true;
     } catch (Exception $e) {
         return false;
+    }
+}
+
+function sendCandidateL1ClearEmail(
+    string $candidateEmail,
+    string $candidateName,
+    string $position
+): array {
+    $errorMessage = null;
+    $mail = buildMailer($errorMessage);
+    if (!$mail) {
+        return [
+            'success' => false,
+            'message' => 'Unable to initialize mailer: ' . ($errorMessage ?: 'Unknown error')
+        ];
+    }
+
+    if (!filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid candidate email address'
+        ];
+    }
+
+    try {
+        $mail->addAddress($candidateEmail);
+        $mail->Subject = 'Congratulations! L1 Interview Cleared - ' . $position;
+        $mail->isHTML(true);
+        $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
+            . '<tr><td align="center">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="620" style="max-width:620px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">'
+            . '<tr><td style="background:linear-gradient(135deg, #059669 0%, #047857 100%);padding:22px 24px;">'
+            . '<div style="font-size:12px;letter-spacing:1px;color:#d1fae5;text-transform:uppercase;">Interview Hub</div>'
+            . '<div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;margin-top:8px;">🎉 Congratulations!</div>'
+            . '</td></tr>'
+            . '<tr><td style="padding:24px;">'
+            . '<p style="margin:0 0 14px 0;font-size:15px;line-height:22px;">Dear <strong>' . htmlspecialchars($candidateName) . '</strong>,</p>'
+            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">Great news! You have successfully cleared the <strong>L1 Interview</strong> for the position of <strong>' . htmlspecialchars($position) . '</strong>.</p>'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border:1px solid #d1fae5;border-radius:10px;background:#ecfdf5;">'
+            . '<tr><td style="padding:16px;text-align:center;">'
+            . '<div style="font-size:16px;font-weight:700;color:#059669;margin-bottom:6px;">✓ L1 Interview Cleared</div>'
+            . '<div style="font-size:13px;color:#047857;">You will be notified about the L2 interview schedule soon.</div>'
+            . '</td></tr>'
+            . '</table>'
+            . '<p style="margin:18px 0 0 0;font-size:13px;line-height:20px;color:#374151;">Please prepare for the next round. We will send you the L2 interview details shortly.</p>'
+            . '<p style="margin:12px 0 0 0;font-size:13px;line-height:20px;color:#374151;">Best of luck for the upcoming round!</p>'
+            . '</td></tr>'
+            . '<tr><td style="border-top:1px solid #e5e7eb;padding:14px 24px;font-size:12px;color:#6b7280;">Interview Hub</td></tr>'
+            . '</table>'
+            . '</td></tr></table>'
+            . '</body></html>';
+
+        $mail->AltBody = "Dear {$candidateName},\n\n"
+            . "Great news! You have successfully cleared the L1 Interview for the position of {$position}.\n\n"
+            . "You will be notified about the L2 interview schedule soon.\n\n"
+            . "Please prepare for the next round. Best of luck!\n\n"
+            . "Best regards,\nInterview Hub";
+
+        $mail->send();
+        return ['success' => true, 'message' => 'L1 clear notification sent to candidate'];
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Email failed: ' . $mail->ErrorInfo];
+    }
+}
+
+function sendCandidateL1RejectEmail(
+    string $candidateEmail,
+    string $candidateName,
+    string $position
+): array {
+    $errorMessage = null;
+    $mail = buildMailer($errorMessage);
+    if (!$mail) {
+        return [
+            'success' => false,
+            'message' => 'Unable to initialize mailer: ' . ($errorMessage ?: 'Unknown error')
+        ];
+    }
+
+    if (!filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid candidate email address'
+        ];
+    }
+
+    try {
+        $mail->addAddress($candidateEmail);
+        $mail->Subject = 'Interview Update - ' . $position;
+        $mail->isHTML(true);
+        $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
+            . '<tr><td align="center">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="620" style="max-width:620px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">'
+            . '<tr><td style="background:#0f172a;padding:22px 24px;">'
+            . '<div style="font-size:12px;letter-spacing:1px;color:#93c5fd;text-transform:uppercase;">Interview Hub</div>'
+            . '<div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;margin-top:8px;">Interview Update</div>'
+            . '</td></tr>'
+            . '<tr><td style="padding:24px;">'
+            . '<p style="margin:0 0 14px 0;font-size:15px;line-height:22px;">Dear <strong>' . htmlspecialchars($candidateName) . '</strong>,</p>'
+            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">Thank you for taking the time to interview for the position of <strong>' . htmlspecialchars($position) . '</strong>.</p>'
+            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">After careful consideration, we have decided not to move forward with your application at this time.</p>'
+            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">We appreciate your interest in our organization and wish you all the best in your future endeavors.</p>'
+            . '</td></tr>'
+            . '<tr><td style="border-top:1px solid #e5e7eb;padding:14px 24px;font-size:12px;color:#6b7280;">Interview Hub</td></tr>'
+            . '</table>'
+            . '</td></tr></table>'
+            . '</body></html>';
+
+        $mail->AltBody = "Dear {$candidateName},\n\n"
+            . "Thank you for taking the time to interview for the position of {$position}.\n\n"
+            . "After careful consideration, we have decided not to move forward with your application at this time.\n\n"
+            . "We appreciate your interest in our organization and wish you all the best in your future endeavors.\n\n"
+            . "Best regards,\nInterview Hub";
+
+        $mail->send();
+        return ['success' => true, 'message' => 'Interview update sent to candidate'];
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Email failed: ' . $mail->ErrorInfo];
+    }
+}
+
+function sendCandidateL2ClearEmail(
+    string $candidateEmail,
+    string $candidateName,
+    string $position
+): array {
+    $errorMessage = null;
+    $mail = buildMailer($errorMessage);
+    if (!$mail) {
+        return [
+            'success' => false,
+            'message' => 'Unable to initialize mailer: ' . ($errorMessage ?: 'Unknown error')
+        ];
+    }
+
+    if (!filter_var($candidateEmail, FILTER_VALIDATE_EMAIL)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid candidate email address'
+        ];
+    }
+
+    try {
+        $mail->addAddress($candidateEmail);
+        $mail->Subject = 'Congratulations! L2 Interview Cleared - ' . $position;
+        $mail->isHTML(true);
+        $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
+            . '<tr><td align="center">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="620" style="max-width:620px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">'
+            . '<tr><td style="background:linear-gradient(135deg, #059669 0%, #047857 100%);padding:22px 24px;">'
+            . '<div style="font-size:12px;letter-spacing:1px;color:#d1fae5;text-transform:uppercase;">Interview Hub</div>'
+            . '<div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;margin-top:8px;">🎉 Excellent Performance!</div>'
+            . '</td></tr>'
+            . '<tr><td style="padding:24px;">'
+            . '<p style="margin:0 0 14px 0;font-size:15px;line-height:22px;">Dear <strong>' . htmlspecialchars($candidateName) . '</strong>,</p>'
+            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">Congratulations! You have successfully cleared the <strong>L2 Interview</strong> for the position of <strong>' . htmlspecialchars($position) . '</strong>.</p>'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border:1px solid #d1fae5;border-radius:10px;background:#ecfdf5;">'
+            . '<tr><td style="padding:16px;text-align:center;">'
+            . '<div style="font-size:16px;font-weight:700;color:#059669;margin-bottom:6px;">✓ L2 Interview Cleared</div>'
+            . '<div style="font-size:13px;color:#047857;">Our HR team will contact you soon with the next steps.</div>'
+            . '</td></tr>'
+            . '</table>'
+            . '<p style="margin:18px 0 0 0;font-size:13px;line-height:20px;color:#374151;">We are impressed with your performance and look forward to having you on our team!</p>'
+            . '</td></tr>'
+            . '<tr><td style="border-top:1px solid #e5e7eb;padding:14px 24px;font-size:12px;color:#6b7280;">Interview Hub</td></tr>'
+            . '</table>'
+            . '</td></tr></table>'
+            . '</body></html>';
+
+        $mail->AltBody = "Dear {$candidateName},\n\n"
+            . "Congratulations! You have successfully cleared the L2 Interview for the position of {$position}.\n\n"
+            . "Our HR team will contact you soon with the next steps.\n\n"
+            . "We are impressed with your performance and look forward to having you on our team!\n\n"
+            . "Best regards,\nInterview Hub";
+
+        $mail->send();
+        return ['success' => true, 'message' => 'L2 clear notification sent to candidate'];
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Email failed: ' . $mail->ErrorInfo];
     }
 }

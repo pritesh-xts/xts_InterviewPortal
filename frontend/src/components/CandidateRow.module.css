@@ -104,3 +104,21 @@
   background: #1e293b;
   transform: translateY(-1px);
 }
+
+.rejectedBadge {
+  padding: 4px 10px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #dc2626;
+  white-space: nowrap;
+}
+
+.statusWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
