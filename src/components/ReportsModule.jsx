@@ -230,63 +230,111 @@ const downloadByDate = () => {
         </table>
 
         {/* REPORT DOWNLOAD POPUP */}
+        
+        {/* DOWNLOAD MODAL */}
         {showDownload && (
-        <div className="modal d-block" tabIndex="-1">
-          <div className="modal-dialog">
-            <div className="modal-content p-4 rounded-4">
+  <>
+    {/* BACKDROP */}
+    <div
+      className="modal-backdrop fade show"
+      onClick={() => setShowDownload(false)}
+    ></div>
 
-              <h5 className="mb-3">Download Report</h5>
+    {/* MODAL */}
+    <div
+      className="modal d-block"
+      tabIndex="-1"
+      style={{ background: "rgba(0,0,0,0.6)" }}
+    >
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content p-4 rounded-4 shadow-lg border-0">
 
-              <button
-                className="btn btn-primary mb-3"
-                onClick={downloadCurrentMonth}
-              >
-                Download Current Month
-              </button>
+          {/* HEADER */}
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="fw-bold mb-0 text-primary">
+              <i className="bi bi-download me-2"></i>
+              Download Report
+            </h5>
 
-              <hr />
+            {/* Close Icon */}
+            <button
+              className="btn btn-sm btn-light rounded-circle shadow-sm"
+              onClick={() => setShowDownload(false)}
+              style={{ width: "32px", height: "32px" }}
+            >
+              ✕
+            </button>
+          </div>
 
-              <div className="mb-3">
-                <label>From Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </div>
+          {/* CURRENT MONTH BUTTON */}
+          <button
+            className="btn btn-primary mb-3 w-100 rounded-3"
+            onClick={downloadCurrentMonth}
+          >
+            Download Current Month Report 
+          </button>
 
-              <div className="mb-3">
-                <label>To Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </div>
+          {/* <div className="text-center my-2 text-muted">OR</div> */}
 
-              <button
-                className="btn btn-success"
-                onClick={downloadByDate}
-              >
-                Download By Date
-              </button>
+          {/* DATE RANGE SECTION */}
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">From Date</label>
+              <input
+                type="date"
+                className="form-control rounded-3"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </div>
 
-              <button
-                className="btn btn-secondary mt-3"
-                onClick={() => setShowDownload(false)}
-              >
-                Close
-              </button>
-
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">To Date</label>
+              <input
+                type="date"
+                className="form-control rounded-3"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
             </div>
           </div>
+
+          {/* ACTION BUTTONS */}
+          <div className="d-flex gap-2 mt-4">
+            <button
+              className="btn btn-success w-100 rounded-3"
+              onClick={downloadByDate}
+            >
+              ⬇ Download By Date
+            </button>
+
+            <button
+              className="btn btn-outline-danger rounded-3"
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+              }}
+            >
+              Reset
+            </button>
+          </div>
+
+          {/* <button
+            className="btn btn-light mt-3 w-100 rounded-3"
+            onClick={() => setShowDownload(false)}
+          >
+            Close
+          </button> */}
+
         </div>
-      )}
+      </div>
+    </div>
+  </>
+)}
       </div>
     );
   };
+
 
   /* -------------------- STAT CARD -------------------- */
   const StatCard = ({ label, value, type }) => {

@@ -149,7 +149,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
   // const fetchStatuses = async () => {
   //   try {
-  //     const response = await fetch('http://localhost/xts_interviewPortalapi/status/getAll.php');
+  //     const response = await fetch('http://localhost/InterviewPortal/files/api/status/getAll.php');
   //     const result = await response.json();
   //     if (result.success) {
   //       setStatuses(result.data);
@@ -178,7 +178,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
   // const fetchPanels = async () => {
   //   try {
-  //     const response = await fetch('http://localhost/xts_interviewPortalapi/users/getPanels.php');
+  //     const response = await fetch('http://localhost/InterviewPortal/files/api/users/getPanels.php');
   //     const result = await response.json();
   //     if (result.success) {
   //       setPanels(result.data);
