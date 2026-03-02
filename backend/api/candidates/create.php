@@ -20,16 +20,18 @@ try {
     $experience = isset($data->experience) ? floatval($data->experience) : 0;
     
     $query = "INSERT INTO mst_candidates 
-              (Candidate_name, Candidate_phone, Candidate_position, Candidate_resume_link, 
+              (Candidate_name, Candidate_phone, Candidate_position, Candidate_primary_skill, Candidate_resume_link, 
                Candidate_department, Candidate_skills, Candidate_experience, Candidate_email, 
                Current_status, Isactive) 
-              VALUES (:name, :phone, :position, :resume, :department, :skills, :experience, :email, :status, 1)";
+              VALUES (:name, :phone, :position, :primarySkill, :resume, :department, :skills, :experience, :email, :status, 1)";
     
     $stmt = $db->prepare($query);
     $stmt->bindParam(":name", $data->name);
     $phone = $data->phone ?? '';
     $stmt->bindParam(":phone", $phone);
     $stmt->bindParam(":position", $data->position);
+    $primarySkill = $data->primarySkill ?? '';
+    $stmt->bindParam(":primarySkill", $primarySkill);
     $resume = $data->resume ?? '';
     $stmt->bindParam(":resume", $resume);
     $department = $data->department ?? 'Engineering';

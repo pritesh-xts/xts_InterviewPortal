@@ -92,6 +92,36 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     fetchPanels();
   }, []);
 
+  // Set initial feedback status based on interview assignment
+  useEffect(() => {
+    if (statuses.length > 0 && candidateDetails) {
+      const interviewData = candidateDetails.interview;
+      const userId = String(user?.id || user?.User_id || '');
+      const isPanel = Number(user?.roleId || user?.Role_id) === 2;
+      
+      if (isPanel && interviewData && String(interviewData.Feedback_by) === userId) {
+        const interviewStatus = Number(interviewData.Status_id);
+        let defaultStatusId = '';
+        
+        if (interviewStatus === 8) {
+          // L1 Interview - default to first L1 status
+          const l1Status = statuses.find(st => [1, 2, 3].includes(Number(st.Status_id)));
+          defaultStatusId = l1Status ? l1Status.Status_id : '';
+        } else if (interviewStatus === 9) {
+          // L2 Interview - default to first L2 status
+          const l2Status = statuses.find(st => [4, 5, 6].includes(Number(st.Status_id)));
+          defaultStatusId = l2Status ? l2Status.Status_id : '';
+        }
+        
+        if (defaultStatusId) {
+          const nextFeedback = { statusId: defaultStatusId, notes: '' };
+          setFeedback(nextFeedback);
+          setInitialFeedback(nextFeedback);
+        }
+      }
+    }
+  }, [statuses, candidateDetails]);
+
   const fetchCandidateDetails = async () => {
     try {
       const candidateId = c.Candidate_id || c.id;
@@ -109,7 +139,8 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           experience: result.data.Candidate_experience,
           resume: result.data.Candidate_resume_link,
           skills: result.data.Candidate_skills,
-          status: result.data.Current_status
+          status: result.data.Current_status,
+          reason: result.data.Reason || ''
         });
         setInitialEditForm({
           id: result.data.Candidate_id,
@@ -121,7 +152,8 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           experience: result.data.Candidate_experience,
           resume: result.data.Candidate_resume_link,
           skills: result.data.Candidate_skills,
-          status: result.data.Current_status
+          status: result.data.Current_status,
+          reason: result.data.Reason || ''
         });
         if (result.data.interview) {
           const rawDateTime = String(result.data.interview.DateTime || '');
@@ -166,11 +198,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     try {
       const data = await getStatuses();
       setStatuses(data);
-      if (data.length > 0) {
-        const nextFeedback = { statusId: data[0].Status_id, notes: '' };
-        setFeedback(nextFeedback);
-        setInitialFeedback(nextFeedback);
-      }
+      // Don't set initial feedback here - it will be set based on panel assignment
     } catch (error) {
       console.error('Error fetching statuses:', error);
     }
@@ -198,19 +226,37 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   };
 
   const handleSubmitFeedback = async () => {
-    const currentUserId = String(user?.id || user?.User_id || '');
-    const isPanelUser = Number(user?.roleId || user?.Role_id) === 2;
-    const panelScheduledRounds = history.filter(
-      item => String(item?.Feedback_by || '') === currentUserId && (Number(item?.Status_id) === 8 || Number(item?.Status_id) === 9)
-    ).length;
-    const panelSubmittedRounds = history.filter(
-      item => String(item?.Feedback_by || '') === currentUserId && String(item?.Feedback || '').trim().length > 0
-    ).length;
-    const panelHasSubmitted = panelScheduledRounds > 0
-      ? panelSubmittedRounds >= panelScheduledRounds
-      : panelSubmittedRounds > 0;
-    if (isPanelUser && panelHasSubmitted) {
+    // Check if feedback already submitted for current active interview
+    if (panelFeedbackLocked) {
       alert('Feedback already submitted. View only mode is enabled.');
+      return;
+    }
+
+    // Validate that panel is assigned to current interview
+    if (!interview || String(interview.Feedback_by) !== currentUserId) {
+      alert('You are not assigned to this interview.');
+      return;
+    }
+
+    // Get the interview status to determine which feedback statuses are allowed
+    const interviewStatusId = Number(interview.Status_id);
+    const selectedFeedbackStatusId = Number(feedback.statusId);
+    
+    console.log('Feedback Validation:', {
+      interviewStatusId,
+      selectedFeedbackStatusId,
+      feedbackStatusIdRaw: feedback.statusId,
+      isL1Interview: interviewStatusId === 8,
+      isL2Interview: interviewStatusId === 9
+    });
+    
+    // Validate feedback status matches interview round
+    if (interviewStatusId === 8 && ![1, 2, 3].includes(selectedFeedbackStatusId)) {
+      alert('For L1 Interview, please select L1 feedback status (L1 Clear, L1 Reject, or L1 Hold).');
+      return;
+    }
+    if (interviewStatusId === 9 && ![4, 5, 6].includes(selectedFeedbackStatusId)) {
+      alert('For L2 Interview, please select L2 feedback status (L2 Clear, L2 Reject, or L2 Hold).');
       return;
     }
 
@@ -284,7 +330,8 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
         }
 
         alert('Feedback submitted successfully!');
-        onClose();
+        await fetchCandidateDetails();
+        setTab('history');
       } else {
         alert(result.message || 'Failed to submit feedback');
       }
@@ -473,18 +520,15 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const historyLoaded = candidateDetails !== null;
   const currentUserId = String(user?.id || user?.User_id || '');
   const isPanelUser = Number(user?.roleId || user?.Role_id) === 2;
-  const panelScheduledRounds = history.filter(
-    item => String(item?.Feedback_by || '') === currentUserId && (Number(item?.Status_id) === 8 || Number(item?.Status_id) === 9)
-  ).length;
-  const panelSubmittedRounds = history.filter(
-    item => String(item?.Feedback_by || '') === currentUserId && String(item?.Feedback || '').trim().length > 0
-  ).length;
-  const panelFeedbackLocked = isPanelUser && (panelScheduledRounds > 0
-    ? panelSubmittedRounds >= panelScheduledRounds
-    : panelSubmittedRounds > 0);
-  const lastPanelFeedback = [...history].reverse().find(
-    item => String(item?.Feedback_by || '') === currentUserId && String(item?.Feedback || '').trim().length > 0
-  );
+  
+  // Check if panel has submitted feedback for the CURRENT active interview only
+  const currentInterviewHasFeedback = interview && 
+    String(interview.Feedback_by) === currentUserId && 
+    String(interview.Feedback || '').trim().length > 0;
+  
+  const panelFeedbackLocked = isPanelUser && currentInterviewHasFeedback;
+  
+  const lastPanelFeedback = currentInterviewHasFeedback ? interview : null;
   const panelFeedbackStatusLabel = lastPanelFeedback?.Interview_status
     || statuses.find(st => String(st.Status_id) === String(lastPanelFeedback?.Status_id))?.Status_description
     || '-';
@@ -508,31 +552,74 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     };
   }).reverse();
 
-  const showTabs = user && (user.roleId == 2 || user.roleId == 4);
+  const showTabs = user && (user.roleId == 1 || user.roleId == 2 || user.roleId == 4);
   const canEdit = user && (user.roleId == 1 || user.roleId == 4);
   const isAdmin = Number(user?.roleId || user?.Role_id) === 4;
+  const isHR = Number(user?.roleId || user?.Role_id) === 1;
   const hrAllowedStatusIds = new Set([7, 8, 9]);
-  const hrStatuses = statuses.filter(st => hrAllowedStatusIds.has(Number(st.Status_id)));
-  
-  // Filter panel statuses based on current interview round
   const currentStatus = Number(data.Current_status || c.Current_status);
-  let panelStatuses = [];
   
-  if (currentStatus === 8) {
-    // L1 Interview - Show only L1 statuses (1, 2, 3)
-    panelStatuses = statuses.filter(st => [1, 2, 3].includes(Number(st.Status_id)));
-  } else if (currentStatus === 9) {
-    // L2 Interview - Show only L2 statuses (4, 5, 6)
-    panelStatuses = statuses.filter(st => [4, 5, 6].includes(Number(st.Status_id)));
-  } else {
-    // Fallback - show all non-HR statuses
+  // Determine panel statuses based on active interview assignment
+  let panelStatuses = [];
+  if (isPanelUser && interview && String(interview.Feedback_by) === currentUserId) {
+    // Panel is assigned to this candidate's active interview
+    const interviewStatus = Number(interview.Status_id);
+    
+    // Check if panel already submitted feedback for this interview
+    const alreadySubmittedForThisInterview = String(interview.Feedback || '').trim().length > 0;
+    
+    console.log('Panel Statuses Debug:', {
+      interviewStatus,
+      alreadySubmittedForThisInterview,
+      isPanelUser,
+      currentUserId,
+      interviewFeedbackBy: interview.Feedback_by
+    });
+    
+    if (!alreadySubmittedForThisInterview) {
+      if (interviewStatus === 8) {
+        // L1 Interview - Show only L1 statuses
+        panelStatuses = statuses.filter(st => [1, 2, 3].includes(Number(st.Status_id)));
+      } else if (interviewStatus === 9) {
+        // L2 Interview - Show only L2 statuses
+        panelStatuses = statuses.filter(st => [4, 5, 6].includes(Number(st.Status_id)));
+      }
+    }
+  } else if (!isPanelUser) {
+    // HR/Admin - show all non-HR statuses
     panelStatuses = statuses.filter(st => !hrAllowedStatusIds.has(Number(st.Status_id)));
   }
   
-  const hrVisibleStatuses = isAdmin ? statuses : (hrStatuses.length > 0 ? hrStatuses : statuses);
+  // HR statuses logic - must be after currentStatus is defined
+  const l2ClearedStatusIds = new Set([10, 11]);
+  const hasL2Cleared = history.some(h => Number(h.Status_id) === 4) || currentStatus === 4;
+  
+  let hrStatuses = [];
+  if (isAdmin) {
+    hrStatuses = statuses;
+  } else if (isHR) {
+    if (hasL2Cleared) {
+      // If L2 is cleared, show only Offer statuses
+      hrStatuses = statuses.filter(st => l2ClearedStatusIds.has(Number(st.Status_id)));
+    } else {
+      // Otherwise show normal HR statuses
+      hrStatuses = statuses.filter(st => hrAllowedStatusIds.has(Number(st.Status_id)));
+    }
+  } else {
+    hrStatuses = statuses.filter(st => hrAllowedStatusIds.has(Number(st.Status_id)));
+  }
+
+  const hrVisibleStatuses = isAdmin ? statuses : hrStatuses;
   const hrStatusOptions = hrVisibleStatuses.map(st => ({ value: st.Status_id, label: st.Status_description }));
   const panelVisibleStatuses = isAdmin ? statuses : (panelStatuses.length > 0 ? panelStatuses : statuses);
   const panelStatusOptions = panelVisibleStatuses.map(st => ({ value: st.Status_id, label: st.Status_description }));
+  
+  console.log('Panel Status Options:', {
+    panelStatusesLength: panelStatuses.length,
+    panelVisibleStatusesLength: panelVisibleStatuses.length,
+    panelStatusOptions: panelStatusOptions,
+    currentFeedbackStatusId: feedback.statusId
+  });
   const depts = ['Engineering', 'MTech', 'Masters', 'BTech', 'Bachelors', 'CDAC', 'Diploma', 'Other'].map(d => ({ value: d, label: d }));
   const panelOptions = [{ value: '', label: 'Select Panel' }, ...panels.map(p => ({ value: p.User_id, label: p.User_name }))];
   const timeOptions = (() => {
@@ -570,13 +657,13 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
             </div>
           </div>
           <div className={s.heroActions}>
-            {canEdit && !isEditing && <Btn onClick={() => setIsEditing(true)} variant="primary" small>Edit</Btn>}
+            {canEdit && !isEditing && tab === 'details' && <Btn onClick={() => setIsEditing(true)} variant="primary" small>Edit</Btn>}
             <Btn onClick={onClose} variant="ghost" small><Icons.X /></Btn>
           </div>
         </div>
         {showTabs && (
           <div className={s.tabs}>
-            {['details', 'feedback'].map(t => (
+            {['details', 'feedback', 'history'].map(t => (
               <button key={t} onClick={() => setTab(t)} className={`${s.tabBtn} ${tab == t ? s.tabBtnActive : ''}`}>{t}</button>
             ))}
           </div>
@@ -611,6 +698,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                   <div className={s.span2}>
                     <Input label="Skills (comma-separated) *" value={editForm.skills} onChange={(e) => setEditForm(f => ({ ...f, skills: e.target.value }))} />
                   </div>
+                  {(hasL2Cleared || [10, 11].includes(Number(editForm.status))) && (
+                    <div className={s.span2}>
+                      <Input label="Reason *" value={editForm.reason || ''} onChange={(e) => setEditForm(f => ({ ...f, reason: e.target.value }))} placeholder="Enter reason for this status" />
+                    </div>
+                  )}
                 </div>
                 {showInterviewEditSection && (
                   <div className={s.mt24}>
@@ -673,7 +765,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                     </div>
                   </div>
                 )}
-                {historyEntries.length > 0 && (
+                {/* {historyEntries.length > 0 && (
                   <div className={s.historyWrap}>
                     <h3 className={s.historyTitle}>Interview History</h3>
                     <div className={s.timeline}>
@@ -707,31 +799,80 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                       ))}
                     </div>
                   </div>
-                )}
+                )} */}
               </>
             )}
           </>
         )}
+        {tab == 'history' && showTabs && (
+          <div>
+            <h3 className={s.sectionTitle}>Feedback History</h3>
+            {historyLoaded && (() => {
+              const allFeedbacks = history.filter(h => {
+                const statusId = Number(h.Status_id);
+                const hasFeedback = String(h.Feedback || '').trim().length > 0;
+                return [1, 2, 3, 4, 5, 6].includes(statusId) && hasFeedback;
+              });
+
+              if (allFeedbacks.length === 0) {
+                return <p className={s.noHistory}>No feedback history available.</p>;
+              }
+
+              return (
+                <div className={s.historyFeedbackWrap}>
+                  {allFeedbacks.map((entry, idx) => {
+                    const statusId = Number(entry.Status_id);
+                    const isL1 = [1, 2, 3].includes(statusId);
+                    const roundLabel = isL1 ? 'L1 Interview' : 'L2 Interview';
+
+                    return (
+                      <div key={idx} className={s.historyFeedbackCard}>
+                        <div className={s.historyFeedbackHeader}>
+                          <h4 className={s.roundLabel}>{roundLabel}</h4>
+                          <span className={s.feedbackDate}>
+                            {entry.DateTime ? formatISTDate(entry.DateTime) : '-'} {entry.DateTime ? formatISTTime(entry.DateTime) : ''}
+                          </span>
+                        </div>
+                        <div className={s.historyGrid}>
+                          <p className={s.line}><strong className={s.strong}>Status:</strong> {entry.Interview_status || '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Panel:</strong> {entry.Panel_name || '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Location:</strong> {entry.Location || '-'}</p>
+                          <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {entry.Feedback}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )}
         {tab == 'feedback' && showTabs && (
           <div>
             <h3 className={s.sectionTitle}>Submit Feedback</h3>
-            
-            {/* Show L1 feedback for L2 panels */}
-            {currentStatus === 9 && historyLoaded && (
-              <div className={s.l1FeedbackBox}>
-                <h4 className={s.l1FeedbackTitle}>L1 Interview Feedback</h4>
-                {(() => {
-                  const l1Feedbacks = history.filter(h => {
-                    const statusId = Number(h.Status_id);
-                    const hasFeedback = String(h.Feedback || '').trim().length > 0;
-                    return [1, 2, 3].includes(statusId) && hasFeedback;
-                  });
-                  
-                  if (l1Feedbacks.length === 0) {
-                    return <p className={s.line}>No L1 feedback submitted yet.</p>;
-                  }
-                  
-                  return l1Feedbacks.map((l1Entry, idx) => (
+
+            {/* Show L1 feedback for L2 panels, HR, and Admin */}
+            {historyLoaded && (() => {
+              const l1Feedbacks = history.filter(h => {
+                const statusId = Number(h.Status_id);
+                const hasFeedback = String(h.Feedback || '').trim().length > 0;
+                const notCurrentUser = String(h.Feedback_by || '') !== currentUserId;
+                return [1, 2, 3].includes(statusId) && hasFeedback && notCurrentUser;
+              });
+
+              // Show L1 feedback if:
+              // 1. User is HR (roleId 1) OR Admin (roleId 4) OR
+              // 2. Panel is scheduled for L2 and there are L1 feedbacks from OTHER panels
+              const isHRorAdmin = [1, 4].includes(Number(user?.roleId || user?.Role_id));
+              const panelIsL2 = isPanelUser && interview && String(interview.Feedback_by) === currentUserId && Number(interview.Status_id) === 9;
+              const shouldShowL1Feedback = l1Feedbacks.length > 0 && (isHRorAdmin || panelIsL2);
+
+              if (!shouldShowL1Feedback) return null;
+
+              return (
+                <div className={s.l1FeedbackBox}>
+                  <h4 className={s.l1FeedbackTitle}>L1 Interview Feedback</h4>
+                  {l1Feedbacks.map((l1Entry, idx) => (
                     <div key={idx} className={s.l1FeedbackCard}>
                       <div className={s.l1FeedbackGrid}>
                         <p className={s.line}><strong className={s.strong}>Status:</strong> {l1Entry.Interview_status || '-'}</p>
@@ -741,11 +882,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                         <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {l1Entry.Feedback}</p>
                       </div>
                     </div>
-                  ));
-                })()}
-              </div>
-            )}
-            
+                  ))}
+                </div>
+              );
+            })()}
+
             {panelFeedbackLocked ? (
               <div className={s.feedbackBox}>
                 <div className={s.notesWrap}>

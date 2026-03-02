@@ -4,7 +4,7 @@ import { Icons } from '../ui/Icons';
 import s from './AddCandidateModal.module.css';
 
 export default function AddCandidateModal({ onClose, onAdd, user }) {
-  const [form, setForm] = useState({ name: '', position: '', experience: '', email: '', phone: '', skills: '', department: 'Engineering', status: '7' });
+  const [form, setForm] = useState({ name: '', position: '', primarySkill: '', experience: '', email: '', phone: '', skills: '', department: 'Engineering', status: '7' });
   const [resumeFile, setResumeFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,8 +28,8 @@ export default function AddCandidateModal({ onClose, onAdd, user }) {
   };
 
   const submit = async () => {
-    if (!form.name || !form.position || !form.email || !form.phone || !form.department) {
-      alert('Name, Position, Email, Phone, and Education are required.');
+    if (!form.name || !form.position || !form.primarySkill || !form.email || !form.phone || !form.department) {
+      alert('Name, Position, Primary Skill, Email, Phone, and Education are required.');
       return;
     }
     if (!String(form.skills || '').trim()) {
@@ -92,7 +92,12 @@ export default function AddCandidateModal({ onClose, onAdd, user }) {
           <Input label="Experience (years) *" type="number" step="0.1" min="0" placeholder="e.g. 2.5" value={form.experience} onChange={(e) => set('experience', e.target.value)} />
           <Input label="Email *" type="email" placeholder="candidate@email.com" value={form.email} onChange={(e) => set('email', e.target.value)} />
           <Input label="Phone *" placeholder="10-digit phone number" value={form.phone} maxLength={10} inputMode="numeric" onChange={(e) => setPhone(e.target.value)} />
-          <div className={s.span2}>
+          <Input label="Primary Skill (comma-separated)*" placeholder="e.g. Frontend, Backend" value={form.primarySkill} onChange={(e) => set('primarySkill', e.target.value)} />
+          <Input label="Skills (comma-separated) *" placeholder="React, TypeScript, Node.js" value={form.skills} onChange={(e) => set('skills', e.target.value)} />
+
+          <Input label="Resume (PDF/DOC/DOCX, max 5MB) *" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
+          {/* <p className={s.fileName}>{resumeFile ? resumeFile.name : 'No file selected'}</p> */}
+          {/* <div className={s.span2}>
             <div className={s.fileField}>
               <label className={s.fileLabel}>Resume (PDF/DOC/DOCX, max 5MB) *</label>
               <input
@@ -103,9 +108,17 @@ export default function AddCandidateModal({ onClose, onAdd, user }) {
               />
               <p className={s.fileName}>{resumeFile ? resumeFile.name : 'No file selected'}</p>
             </div>
-          </div>
-          <div className={s.span2}><Input label="Skills (comma-separated) *" placeholder="React, TypeScript, Node.js" value={form.skills} onChange={(e) => set('skills', e.target.value)} /></div>
+          </div> */}
+          {/* <div className={s.grid}>
+            <div className={s.span2}>
+              <Input label="Primary Skill *" placeholder="e.g. React" value={form.primarySkill} onChange={(e) => set('primarySkill', e.target.value)} />
+            </div>
+            <div className={s.span2}>
+              <Input label="Skills (comma-separated) *" placeholder="React, TypeScript, Node.js" value={form.skills} onChange={(e) => set('skills', e.target.value)} />
+            </div>
+          </div> */}
         </div>
+
         <div className={s.actions}>
           <Btn onClick={onClose} variant="ghost" disabled={submitting}>Cancel</Btn>
           <Btn onClick={submit} variant="primary" disabled={submitting}><Icons.Plus /> {submitting ? 'Adding...' : 'Add Candidate'}</Btn>

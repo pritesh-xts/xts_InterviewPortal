@@ -24,14 +24,13 @@ try {
     $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($candidate) {
-        $interviewQuery = "SELECT i.*, u.User_name as Panel_name, s.Status_description as Interview_status
-                           FROM tbl_interview_details i
-                           LEFT JOIN mst_users u ON i.Feedback_by = u.User_id
-                           LEFT JOIN mst_application_status s ON i.Status_id = s.Status_id
-                           WHERE i.Candidate_id = :id
-                             AND i.DateTime IS NOT NULL
-                             AND i.DateTime <> '0000-00-00 00:00:00'
-                           ORDER BY i.Interview_id DESC LIMIT 1";
+    $interviewQuery = "SELECT i.*, u.User_name as Panel_name, s.Status_description as Interview_status
+                       FROM tbl_interview_details i
+                       LEFT JOIN mst_users u ON i.Feedback_by = u.User_id
+                       LEFT JOIN mst_application_status s ON i.Status_id = s.Status_id
+                       WHERE i.Candidate_id = :id
+                         AND i.Isactive = 1
+                       ORDER BY i.Interview_id DESC LIMIT 1";
         
         $interviewStmt = $db->prepare($interviewQuery);
         $interviewStmt->bindParam(":id", $candidateId);

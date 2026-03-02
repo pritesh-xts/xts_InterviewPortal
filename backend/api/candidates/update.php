@@ -14,12 +14,13 @@ if (!isset($data->id)) {
 try {
     $skills = is_array($data->skills) ? implode(', ', $data->skills) : ($data->skills ?? '');
     $experience = isset($data->experience) ? floatval($data->experience) : 0;
+    $reason = isset($data->reason) ? $data->reason : null;
     
     $query = "UPDATE mst_candidates 
               SET Candidate_name = :name, Candidate_phone = :phone, Candidate_position = :position, 
                   Candidate_resume_link = :resume, Candidate_department = :department, 
                   Candidate_skills = :skills, Candidate_experience = :experience, 
-                  Candidate_email = :email, Current_status = :status 
+                  Candidate_email = :email, Current_status = :status, Reason = :reason 
               WHERE Candidate_id = :id AND Isactive = 1";
     
     $stmt = $db->prepare($query);
@@ -32,6 +33,7 @@ try {
     $stmt->bindParam(":experience", $experience);
     $stmt->bindParam(":email", $data->email);
     $stmt->bindParam(":status", $data->status);
+    $stmt->bindParam(":reason", $reason);
     $stmt->bindParam(":id", $data->id);
     
     if ($stmt->execute()) {

@@ -413,3 +413,45 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+
+.historyFeedbackWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.historyFeedbackCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.historyFeedbackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.roundLabel {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+
+.feedbackDate {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.noHistory {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 20px;
+  font-size: 14px;
+}

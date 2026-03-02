@@ -62,7 +62,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import styles from "./ReportsModule.module.css";
 
 export default function ReportsModule({ candidates }) {
-   const API_BASE = "http://localhost/xts_interviewportal/";
+   const API_BASE = import.meta.env.VITE_API_URL;
   /* -------------------- ACTIVE TAB -------------------- */
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem("activeTab") || "total";

@@ -57,11 +57,16 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
         : c.Candidate_skills)
     : (c.skills || []);
 
-  const status = c.Status_description || c.status || 'Pending';
-
   const roleId = Number(user?.roleId || user?.Role_id);
   const isHR = roleId === 1 || roleId === 4;
   const isPanel = roleId === 2;
+
+  // For panel users, show their assigned status
+  // If Panel_assigned_status_id is 8 or 9 (scheduled), show that
+  // Otherwise show the feedback status they submitted
+  const status = (isPanel && c.Panel_assigned_status) 
+    ? c.Panel_assigned_status 
+    : (c.Status_description || c.status || 'Pending');
   
   // Check if latest interview invite was rejected
   const inviteRejected = c.Latest_invite_response === 'rejected';
