@@ -1,0 +1,79 @@
+<?php
+require_once '../config/database.php';
+
+$database = new Database();
+$db = $database->getConnection();
+
+$roleId = isset($_GET['roleId']) ? intval($_GET['roleId']) : 0;
+$userId = isset($_GET['userId']) ? intval($_GET['userId']) : 0;
+
+try {
+    $query = "SELECT c.*, s.Status_description,
+              (SELECT i.Invite_response 
+               FROM tbl_interview_details i 
+               WHERE i.Candidate_id = c.Candidate_id 
+               AND i.Isactive = 1 
+               ORDER BY i.Interview_id DESC 
+               LIMIT 1) as Latest_invite_response,
+              (SELECT s2.Status_description
+               FROM tbl_interview_details i2
+               LEFT JOIN mst_application_status s2 ON i2.Status_id = s2.Status_id
+               WHERE i2.Candidate_id = c.Candidate_id
+                 AND i2.Status_id IN (1, 2, 3, 8)
+               ORDER BY i2.Interview_id DESC
+               LIMIT 1) as L1_status,
+              (SELECT s3.Status_description
+               FROM tbl_interview_details i3
+               LEFT JOIN mst_application_status s3 ON i3.Status_id = s3.Status_id
+               WHERE i3.Candidate_id = c.Candidate_id
+                 AND i3.Status_id IN (4, 5, 6, 9)
+               ORDER BY i3.Interview_id DESC
+               LIMIT 1) as L2_status";
+    
+    // For panel users, get their specific interview round assignment
+    if ($roleId === 2 && $userId > 0) {
+        $query .= ",
+              (SELECT i4.Status_id
+               FROM tbl_interview_details i4
+               WHERE i4.Candidate_id = c.Candidate_id
+                 AND i4.Feedback_by = :userId
+               ORDER BY i4.Interview_id DESC
+               LIMIT 1) as Panel_assigned_status_id,
+              (SELECT s4.Status_description
+               FROM tbl_interview_details i4
+               LEFT JOIN mst_application_status s4 ON i4.Status_id = s4.Status_id
+               WHERE i4.Candidate_id = c.Candidate_id
+                 AND i4.Feedback_by = :userId
+               ORDER BY i4.Interview_id DESC
+               LIMIT 1) as Panel_assigned_status";
+    }
+    
+    $query .= "
+              FROM mst_candidates c
+              LEFT JOIN mst_application_status s ON c.Current_status = s.Status_id
+              WHERE c.Isactive = 1";
+
+    if ($roleId === 2 && $userId > 0) {
+        $query .= " AND EXISTS (
+                      SELECT 1
+                      FROM tbl_interview_details i
+                      WHERE i.Candidate_id = c.Candidate_id
+                        AND i.Feedback_by = :userId
+                    )";
+    }
+
+    $query .= " ORDER BY c.Candidate_id DESC";
+    
+    $stmt = $db->prepare($query);
+    if ($roleId === 2 && $userId > 0) {
+        $stmt->bindParam(":userId", $userId, PDO::PARAM_INT);
+    }
+    $stmt->execute();
+    
+    $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode(["success" => true, "data" => $candidates]);
+} catch(PDOException $e) {
+    echo json_encode(["success" => false, "message" => "Server error: " . $e->getMessage()]);
+}
+?>

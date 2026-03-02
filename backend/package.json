@@ -1,0 +1,7 @@
+{
+  "name": "interview-hub-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "php -S localhost:8000"
+  }
+}
