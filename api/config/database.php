@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 class Database {
     private $host = "localhost";
-    private $db_name = "xts_interviewportal";
+    private $db_name = "interviewpanal";
     private $username = "root";
     private $password = "";
     public $conn;
