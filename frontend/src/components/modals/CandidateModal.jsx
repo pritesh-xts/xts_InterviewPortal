@@ -18,6 +18,9 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const [initialEditInterview, setInitialEditInterview] = useState({});
   const [initialFeedback, setInitialFeedback] = useState({ statusId: '', notes: '' });
   const [editResumeFile, setEditResumeFile] = useState(null);
+  const [quickStatus, setQuickStatus] = useState('');
+  const [quickStatusReason, setQuickStatusReason] = useState('');
+  const [forceOfferDecisionEdit, setForceOfferDecisionEdit] = useState(false);
   const [updating, setUpdating] = useState(false);
   const API_BASE = import.meta.env.VITE_API_URL;
   const parseApiDateTimeAsIST = (value) => {
@@ -98,11 +101,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       const interviewData = candidateDetails.interview;
       const userId = String(user?.id || user?.User_id || '');
       const isPanel = Number(user?.roleId || user?.Role_id) === 2;
-      
+
       if (isPanel && interviewData && String(interviewData.Feedback_by) === userId) {
         const interviewStatus = Number(interviewData.Status_id);
         let defaultStatusId = '';
-        
+
         if (interviewStatus === 8) {
           // L1 Interview - default to first L1 status
           const l1Status = statuses.find(st => [1, 2, 3].includes(Number(st.Status_id)));
@@ -112,7 +115,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           const l2Status = statuses.find(st => [4, 5, 6].includes(Number(st.Status_id)));
           defaultStatusId = l2Status ? l2Status.Status_id : '';
         }
-        
+
         if (defaultStatusId) {
           const nextFeedback = { statusId: defaultStatusId, notes: '' };
           setFeedback(nextFeedback);
@@ -173,6 +176,10 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           setInitialEditInterview({});
         }
         setEditResumeFile(null);
+        const statusId = Number(result.data.Current_status ?? 0);
+        setQuickStatus([10, 11].includes(statusId) ? String(statusId) : '');
+        setQuickStatusReason(String(result.data.Reason || ''));
+        setForceOfferDecisionEdit(false);
       }
     } catch (error) {
       console.error('Error fetching candidate details:', error);
@@ -241,7 +248,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     // Get the interview status to determine which feedback statuses are allowed
     const interviewStatusId = Number(interview.Status_id);
     const selectedFeedbackStatusId = Number(feedback.statusId);
-    
+
     console.log('Feedback Validation:', {
       interviewStatusId,
       selectedFeedbackStatusId,
@@ -249,7 +256,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       isL1Interview: interviewStatusId === 8,
       isL2Interview: interviewStatusId === 9
     });
-    
+
     // Validate feedback status matches interview round
     if (interviewStatusId === 8 && ![1, 2, 3].includes(selectedFeedbackStatusId)) {
       alert('For L1 Interview, please select L1 feedback status (L1 Clear, L1 Reject, or L1 Hold).');
@@ -342,6 +349,12 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   };
 
   const handleUpdateCandidate = async () => {
+    if (!canEdit) {
+      alert('Edit is disabled after L1 feedback submission. View-only access is enabled.');
+      setIsEditing(false);
+      return;
+    }
+
     const normalize = (v) => String(v ?? '').trim();
     const sameEditForm =
       normalize(editForm.name) === normalize(initialEditForm.name) &&
@@ -492,6 +505,54 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     }
   };
 
+  const handleQuickStatusUpdate = async () => {
+    if (!isHR) {
+      alert('Only HR can update status from this section.');
+      return;
+    }
+
+    const selectedStatus = Number(quickStatus || 0);
+    if (!selectedStatus) {
+      alert('Please select a valid status');
+      return;
+    }
+    if (l2OfferStatusIds.has(selectedStatus) && !hasL2FeedbackOutcome) {
+      alert('Offer statuses are available only after L2 feedback is submitted as L2 Clear or On Hold after L2.');
+      return;
+    }
+    if (selectedStatus === 11 && !String(quickStatusReason || '').trim()) {
+      alert('Reason is required for Offer On Hold.');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const candidateId = data.Candidate_id || c.Candidate_id || c.id;
+      const response = await fetch(`${API_BASE}api/candidates/updateStatus.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: candidateId,
+          status: selectedStatus,
+          reason: selectedStatus === 11 ? String(quickStatusReason || '').trim() : null
+        })
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert('Status updated successfully');
+        setForceOfferDecisionEdit(false);
+        await fetchCandidateDetails();
+      } else {
+        alert(result.message || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Error updating status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const data = candidateDetails || c;
   const name = data.Candidate_name || data.name || '';
   const position = data.Candidate_position || data.position || '';
@@ -520,14 +581,14 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const historyLoaded = candidateDetails !== null;
   const currentUserId = String(user?.id || user?.User_id || '');
   const isPanelUser = Number(user?.roleId || user?.Role_id) === 2;
-  
+
   // Check if panel has submitted feedback for the CURRENT active interview only
-  const currentInterviewHasFeedback = interview && 
-    String(interview.Feedback_by) === currentUserId && 
+  const currentInterviewHasFeedback = interview &&
+    String(interview.Feedback_by) === currentUserId &&
     String(interview.Feedback || '').trim().length > 0;
-  
+
   const panelFeedbackLocked = isPanelUser && currentInterviewHasFeedback;
-  
+
   const lastPanelFeedback = currentInterviewHasFeedback ? interview : null;
   const panelFeedbackStatusLabel = lastPanelFeedback?.Interview_status
     || statuses.find(st => String(st.Status_id) === String(lastPanelFeedback?.Status_id))?.Status_description
@@ -535,6 +596,16 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const panelFeedbackDate = lastPanelFeedback?.DateTime
     ? formatISTDateTime(lastPanelFeedback.DateTime)
     : '-';
+  const canWriteFeedback = Boolean(
+    isPanelUser && interview && String(interview.Feedback_by) === currentUserId
+  );
+  const submittedFeedbackEntries = [...history]
+    .filter(item => {
+      const statusId = Number(item.Status_id);
+      const hasFeedback = String(item.Feedback || '').trim().length > 0;
+      return [1, 2, 3, 4, 5, 6].includes(statusId) && hasFeedback;
+    })
+    .reverse();
   const historyEntries = history.map((item) => {
     const feedbackText = (item.Feedback || '').trim();
     const statusId = Number(item.Status_id);
@@ -552,22 +623,52 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     };
   }).reverse();
 
-  const showTabs = user && (user.roleId == 1 || user.roleId == 2 || user.roleId == 4);
-  const canEdit = user && (user.roleId == 1 || user.roleId == 4);
-  const isAdmin = Number(user?.roleId || user?.Role_id) === 4;
-  const isHR = Number(user?.roleId || user?.Role_id) === 1;
+  const roleId = Number(user?.roleId || user?.Role_id);
+  const showTabs = user && [1, 2, 4].includes(roleId);
+  const isAdmin = roleId == 4;
+  const isHR = roleId == 1;
+  const isHrOrAdmin = isHR || isAdmin;
   const hrAllowedStatusIds = new Set([7, 8, 9]);
-  const currentStatus = Number(data.Current_status || c.Current_status);
-  
+  const l2OfferStatusIds = new Set([10, 11]);
+  const toStatusId = (value) => Number.parseInt(String(value ?? ''), 10) || 0;
+  const currentStatus = toStatusId(data.Current_status ?? c.Current_status);
+  const latestInterviewStatus = toStatusId(interview?.Status_id);
+  const hasL1ScheduledHistory = history.some(item => toStatusId(item?.Status_id) === 8);
+  const isL1Scheduled = currentStatus === 8 || latestInterviewStatus === 8 || hasL1ScheduledHistory;
+  const hasL1FeedbackSubmitted = history.some(item => [1, 2, 3].includes(Number(item?.Status_id))) || [1, 2, 3].includes(currentStatus);
+  const latestL2Feedback = [...history].reverse().find(h => {
+    const statusId = Number(h.Status_id);
+    const hasFeedback = String(h.Feedback || '').trim().length > 0;
+    return [4, 5, 6].includes(statusId) && hasFeedback;
+  });
+  const latestL2FeedbackStatus = Number(latestL2Feedback?.Status_id || 0);
+  const hasL2FeedbackOutcome = [4, 6].includes(latestL2FeedbackStatus) || [4, 6].includes(currentStatus);
+  const hasOfferDecision = [10, 11].includes(currentStatus);
+  const isOfferDecisionEditing = !hasOfferDecision || forceOfferDecisionEdit;
+  const selectedQuickStatus = Number(quickStatus || 0);
+  const existingReason = String(data.Reason || '').trim();
+  const nextReason = String(quickStatusReason || '').trim();
+  const quickStatusChanged = hasOfferDecision
+    ? (selectedQuickStatus !== currentStatus || (selectedQuickStatus === 11 && nextReason !== existingReason))
+    : selectedQuickStatus > 0;
+  const canSubmitOfferDecision = quickStatusChanged && (selectedQuickStatus !== 11 || nextReason.length > 0);
+  const currentStatusLabel = statuses.find(st => Number(st.Status_id) === currentStatus)?.Status_description || status;
+  const canChangeOfferDecision = currentStatus !== 10;
+  const canEdit = isAdmin
+    ? !hasL1FeedbackSubmitted && !isL1Scheduled
+    : isHR
+      ? (!hasL1FeedbackSubmitted && !isL1Scheduled)
+      : false;
+
   // Determine panel statuses based on active interview assignment
   let panelStatuses = [];
   if (isPanelUser && interview && String(interview.Feedback_by) === currentUserId) {
     // Panel is assigned to this candidate's active interview
     const interviewStatus = Number(interview.Status_id);
-    
+
     // Check if panel already submitted feedback for this interview
     const alreadySubmittedForThisInterview = String(interview.Feedback || '').trim().length > 0;
-    
+
     console.log('Panel Statuses Debug:', {
       interviewStatus,
       alreadySubmittedForThisInterview,
@@ -575,7 +676,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       currentUserId,
       interviewFeedbackBy: interview.Feedback_by
     });
-    
+
     if (!alreadySubmittedForThisInterview) {
       if (interviewStatus === 8) {
         // L1 Interview - Show only L1 statuses
@@ -589,31 +690,34 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     // HR/Admin - show all non-HR statuses
     panelStatuses = statuses.filter(st => !hrAllowedStatusIds.has(Number(st.Status_id)));
   }
-  
-  // HR statuses logic - must be after currentStatus is defined
-  const l2ClearedStatusIds = new Set([10, 11]);
-  const hasL2Cleared = history.some(h => Number(h.Status_id) === 4) || currentStatus === 4;
-  
+
+  // HR statuses logic - Offer statuses appear only after L2 feedback outcome
+  // is submitted as L2 Clear (4) or On Hold after L2 (6).
   let hrStatuses = [];
-  if (isAdmin) {
-    hrStatuses = statuses;
-  } else if (isHR) {
-    if (hasL2Cleared) {
+  if (isHR) {
+    if (hasL2FeedbackOutcome) {
       // If L2 is cleared, show only Offer statuses
-      hrStatuses = statuses.filter(st => l2ClearedStatusIds.has(Number(st.Status_id)));
+      hrStatuses = statuses.filter(st => l2OfferStatusIds.has(Number(st.Status_id)));
     } else {
       // Otherwise show normal HR statuses
       hrStatuses = statuses.filter(st => hrAllowedStatusIds.has(Number(st.Status_id)));
     }
+  } else if (isAdmin) {
+    // Admin can edit candidate details but cannot select Offer statuses (10/11)
+    hrStatuses = statuses.filter(st => !l2OfferStatusIds.has(Number(st.Status_id)));
   } else {
     hrStatuses = statuses.filter(st => hrAllowedStatusIds.has(Number(st.Status_id)));
   }
 
-  const hrVisibleStatuses = isAdmin ? statuses : hrStatuses;
+  const hrVisibleStatuses = hrStatuses;
   const hrStatusOptions = hrVisibleStatuses.map(st => ({ value: st.Status_id, label: st.Status_description }));
+  const offerDecisionOptions = [
+    { value: '', label: 'Select offer status' },
+    ...hrStatusOptions
+  ];
   const panelVisibleStatuses = isAdmin ? statuses : (panelStatuses.length > 0 ? panelStatuses : statuses);
   const panelStatusOptions = panelVisibleStatuses.map(st => ({ value: st.Status_id, label: st.Status_description }));
-  
+
   console.log('Panel Status Options:', {
     panelStatusesLength: panelStatuses.length,
     panelVisibleStatusesLength: panelVisibleStatuses.length,
@@ -698,7 +802,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                   <div className={s.span2}>
                     <Input label="Skills (comma-separated) *" value={editForm.skills} onChange={(e) => setEditForm(f => ({ ...f, skills: e.target.value }))} />
                   </div>
-                  {(hasL2Cleared || [10, 11].includes(Number(editForm.status))) && (
+                  {(hasL2FeedbackOutcome || [10, 11].includes(Number(editForm.status))) && (
                     <div className={s.span2}>
                       <Input label="Reason *" value={editForm.reason || ''} onChange={(e) => setEditForm(f => ({ ...f, reason: e.target.value }))} placeholder="Enter reason for this status" />
                     </div>
@@ -722,6 +826,80 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
               </div>
             ) : (
               <>
+                {isHR && hasL2FeedbackOutcome && (
+                  <div className={`${s.interviewCard} ${s.quickStatusCard}`}>
+                    <div className={s.quickStatusHead}>
+                      <Icons.Check />
+                      <h3 className={s.interviewHeadTitle}>Offer Status Update</h3>
+                    </div>
+                    {!isOfferDecisionEditing ? (
+                      <>
+                        <div className={s.historyGrid}>
+                          <p className={s.line}><strong className={s.strong}>Current Decision:</strong> {currentStatusLabel}</p>
+                          {currentStatus === 11 && (
+                            <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Reason:</strong> {existingReason || '-'}</p>
+                          )}
+                        </div>
+                        <div className={s.quickStatusActions}>
+                          <Btn
+                            onClick={() => {
+                              setForceOfferDecisionEdit(true);
+                              setQuickStatus(String(currentStatus));
+                              setQuickStatusReason(existingReason);
+                            }}
+                            variant="ghost"
+                            disabled={!canChangeOfferDecision}
+                          >
+                            Change Decision
+                          </Btn>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={s.grid2}>
+                          <Select
+                            label="Status *"
+                            options={offerDecisionOptions}
+                            value={quickStatus}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              setQuickStatus(next);
+                              if (Number(next) !== 11) {
+                                setQuickStatusReason('');
+                              }
+                            }}
+                          />
+                          {selectedQuickStatus === 11 && (
+                            <Input
+                              label="Reason *"
+                              value={quickStatusReason}
+                              onChange={(e) => setQuickStatusReason(e.target.value)}
+                              placeholder="Enter reason for Offer On Hold"
+                            />
+                          )}
+                        </div>
+                        <div className={s.quickStatusActions}>
+                          {hasOfferDecision && (
+                            <Btn
+                              onClick={() => {
+                                setForceOfferDecisionEdit(false);
+                                setQuickStatus(String(currentStatus));
+                                setQuickStatusReason(existingReason);
+                              }}
+                              variant="ghost"
+                              disabled={updating}
+                            >
+                              Cancel
+                            </Btn>
+                          )}
+                          <Btn onClick={handleQuickStatusUpdate} variant="primary" disabled={updating || !canSubmitOfferDecision}>
+                            {updating ? 'Updating...' : (hasOfferDecision ? 'Save Decision' : 'Submit Decision')}
+                          </Btn>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
                 <div className={s.infoGrid}>
                   {[['Email', email], ['Phone', phone], ['Experience', experience], ['Education', department], ['Resume', resumeDisplay]].map(([k, v]) => (
                     <div key={k} className={s.infoCard}>
@@ -887,31 +1065,62 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
               );
             })()}
 
-            {panelFeedbackLocked ? (
-              <div className={s.feedbackBox}>
-                <div className={s.notesWrap}>
-                  <label className={s.notesLabel}>Status</label>
-                  <div className={s.line}><strong className={s.strong}>{panelFeedbackStatusLabel}</strong></div>
+            {canWriteFeedback ? (
+              panelFeedbackLocked ? (
+                <div className={s.feedbackBox}>
+                  <div className={s.notesWrap}>
+                    <label className={s.notesLabel}>Status</label>
+                    <div className={s.line}><strong className={s.strong}>{panelFeedbackStatusLabel}</strong></div>
+                  </div>
+                  <div className={s.notesWrap}>
+                    <label className={s.notesLabel}>Submitted On</label>
+                    <div className={s.line}>{panelFeedbackDate}</div>
+                  </div>
+                  <div className={s.notesWrap}>
+                    <label className={s.notesLabel}>Detailed Notes</label>
+                    <textarea className={s.notes} value={lastPanelFeedback?.Feedback || ''} readOnly />
+                  </div>
+                  <Btn variant="ghost" disabled>Feedback Already Submitted</Btn>
                 </div>
-                <div className={s.notesWrap}>
-                  <label className={s.notesLabel}>Submitted On</label>
-                  <div className={s.line}>{panelFeedbackDate}</div>
+              ) : (
+                <div className={s.feedbackBox}>
+                  <Select label="Status" options={panelStatusOptions} value={feedback.statusId} onChange={(e) => setFeedback(f => ({ ...f, statusId: e.target.value }))} />
+                  <div className={s.notesWrap}>
+                    <label className={s.notesLabel}>Detailed Notes</label>
+                    <textarea className={s.notes} value={feedback.notes} onChange={(e) => setFeedback(f => ({ ...f, notes: e.target.value }))} placeholder="Share your observations, strengths, concerns..." />
+                  </div>
+                  <Btn onClick={handleSubmitFeedback} variant="primary">Submit Feedback</Btn>
                 </div>
-                <div className={s.notesWrap}>
-                  <label className={s.notesLabel}>Detailed Notes</label>
-                  <textarea className={s.notes} value={lastPanelFeedback?.Feedback || ''} readOnly />
-                </div>
-                <Btn variant="ghost" disabled>Feedback Already Submitted</Btn>
-              </div>
+              )
             ) : (
-              <div className={s.feedbackBox}>
-                <Select label="Status" options={panelStatusOptions} value={feedback.statusId} onChange={(e) => setFeedback(f => ({ ...f, statusId: e.target.value }))} />
-                <div className={s.notesWrap}>
-                  <label className={s.notesLabel}>Detailed Notes</label>
-                  <textarea className={s.notes} value={feedback.notes} onChange={(e) => setFeedback(f => ({ ...f, notes: e.target.value }))} placeholder="Share your observations, strengths, concerns..." />
+              submittedFeedbackEntries.length > 0 ? (
+                <div className={s.historyFeedbackWrap}>
+                  {submittedFeedbackEntries.map((entry, idx) => {
+                    const statusId = Number(entry.Status_id);
+                    const isL1 = [1, 2, 3].includes(statusId);
+                    const roundLabel = isL1 ? 'L1 Interview' : 'L2 Interview';
+
+                    return (
+                      <div key={idx} className={s.historyFeedbackCard}>
+                        <div className={s.historyFeedbackHeader}>
+                          <h4 className={s.roundLabel}>{roundLabel}</h4>
+                          <span className={s.feedbackDate}>
+                            {entry.DateTime ? formatISTDate(entry.DateTime) : '-'} {entry.DateTime ? formatISTTime(entry.DateTime) : ''}
+                          </span>
+                        </div>
+                        <div className={s.historyGrid}>
+                          <p className={s.line}><strong className={s.strong}>Status:</strong> {entry.Interview_status || '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Panel:</strong> {entry.Panel_name || '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Location:</strong> {entry.Location || '-'}</p>
+                          <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {entry.Feedback}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <Btn onClick={handleSubmitFeedback} variant="primary">Submit Feedback</Btn>
-              </div>
+              ) : (
+                <p className={s.noHistory}>No feedback available yet.</p>
+              )
             )}
           </div>
         )}
