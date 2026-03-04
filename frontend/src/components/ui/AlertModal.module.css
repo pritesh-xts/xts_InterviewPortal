@@ -1,0 +1,102 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  min-width: 320px;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.icon.success {
+  background: #d1fae5;
+  color: #10b981;
+}
+
+.icon.error {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.icon.warning {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+.icon.info {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.message {
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 100px;
+}
+
+.btn:hover {
+  background: #2563eb;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}

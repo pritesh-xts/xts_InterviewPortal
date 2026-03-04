@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { Modal, Input, Select, Btn } from '../ui';
 import { Icons } from '../ui/Icons';
 import { getPanels } from '../../api/InterviewPortalApis';
+import { useAlert } from '../../hooks/useAlert';
+import { AlertModal } from '../ui/AlertModal';
 import s from './ScheduleInterviewModal.module.css';
 
 export default function ScheduleInterviewModal({ onClose, onSchedule, candidate }) {
+  const { alert, showAlert, closeAlert } = useAlert();
   const [form, setForm] = useState({ date: '', time: '', location: '', panel: '' });
   const [panels, setPanels] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -64,17 +67,17 @@ export default function ScheduleInterviewModal({ onClose, onSchedule, candidate 
 
   const submit = async () => {
     if (!form.date || !form.time || !String(form.location || '').trim() || !form.panel) {
-      alert('Date, Time, Location and Panel are required.');
+      showAlert('Date, Time, Location and Panel are required.', 'warning');
       return;
     }
 
     if (form.time && !isAllowedInterviewTime(form.time)) {
-      alert('Interview time must be between 09:00 AM and 09:00 PM');
+      showAlert('Interview time must be between 09:00 AM and 09:00 PM', 'warning');
       return;
     }
 
     if (form.date && form.time && isPastDateTime(form.date, form.time)) {
-      alert('Back date/time is not allowed for interview scheduling');
+      showAlert('Back date/time is not allowed for interview scheduling', 'error');
       return;
     }
 
@@ -85,7 +88,7 @@ export default function ScheduleInterviewModal({ onClose, onSchedule, candidate 
     if (result?.success) {
       onClose();
     } else {
-      alert(result?.message || 'Failed to schedule interview');
+      showAlert(result?.message || 'Failed to schedule interview', 'error');
     }
   };
 
@@ -93,7 +96,9 @@ export default function ScheduleInterviewModal({ onClose, onSchedule, candidate 
   const today = getTodayInIST();
 
   return (
-    <Modal onClose={onClose}>
+    <>
+      {alert && <AlertModal message={alert.message} type={alert.type} onClose={closeAlert} />}
+      <Modal onClose={onClose}>
       <div className={s.content}>
         <div className={s.head}>
           <div>
@@ -114,5 +119,6 @@ export default function ScheduleInterviewModal({ onClose, onSchedule, candidate 
         </div>
       </div>
     </Modal>
+    </>
   );
 }

@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Modal, Avatar, Btn, Select, Input } from '../ui';
 import { Icons } from '../ui/Icons';
 import { getStatuses, getPanels, uploadCandidateResume } from '../../api/InterviewPortalApis';
+import { useAlert } from '../../hooks/useAlert';
+import { AlertModal } from '../ui/AlertModal';
 import s from './CandidateModal.module.css';
 
 
 export default function CandidateModal({ candidate: c, onClose, activeRole, user }) {
+  const { alert, showAlert, closeAlert } = useAlert();
   const [tab, setTab] = useState('details');
   const [feedback, setFeedback] = useState({ statusId: '', notes: '' });
   const [candidateDetails, setCandidateDetails] = useState(null);
@@ -235,13 +238,13 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const handleSubmitFeedback = async () => {
     // Check if feedback already submitted for current active interview
     if (panelFeedbackLocked) {
-      alert('Feedback already submitted. View only mode is enabled.');
+      showAlert('Feedback already submitted. View only mode is enabled.', 'warning');
       return;
     }
 
     // Validate that panel is assigned to current interview
     if (!interview || String(interview.Feedback_by) !== currentUserId) {
-      alert('You are not assigned to this interview.');
+      showAlert('You are not assigned to this interview.', 'error');
       return;
     }
 
@@ -259,11 +262,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
     // Validate feedback status matches interview round
     if (interviewStatusId === 8 && ![1, 2, 3].includes(selectedFeedbackStatusId)) {
-      alert('For L1 Interview, please select L1 feedback status (L1 Clear, L1 Reject, or L1 Hold).');
+      showAlert('For L1 Interview, please select L1 feedback status (L1 Clear, L1 Reject, or L1 Hold).', 'warning');
       return;
     }
     if (interviewStatusId === 9 && ![4, 5, 6].includes(selectedFeedbackStatusId)) {
-      alert('For L2 Interview, please select L2 feedback status (L2 Clear, L2 Reject, or L2 Hold).');
+      showAlert('For L2 Interview, please select L2 feedback status (L2 Clear, L2 Reject, or L2 Hold).', 'warning');
       return;
     }
 
@@ -272,17 +275,17 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       normalize(feedback.statusId) === normalize(initialFeedback.statusId) &&
       normalize(feedback.notes) === normalize(initialFeedback.notes);
     if (unchanged) {
-      alert('No change found. Feedback not updated.');
+      showAlert('No change found. Feedback not updated.', 'info');
       onClose();
       return;
     }
 
     if (!feedback.notes.trim()) {
-      alert('Detailed notes are required');
+      showAlert('Detailed notes are required', 'warning');
       return;
     }
     if (!feedback.statusId) {
-      alert('Please select a status');
+      showAlert('Please select a status', 'warning');
       return;
     }
 
@@ -336,15 +339,15 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           console.error('Feedback email request failed:', mailError);
         }
 
-        alert('Feedback submitted successfully!');
+        showAlert('Feedback submitted successfully!', 'success');
         await fetchCandidateDetails();
         setTab('history');
       } else {
-        alert(result.message || 'Failed to submit feedback');
+        showAlert(result.message || 'Failed to submit feedback', 'error');
       }
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      alert('Error submitting feedback');
+      showAlert('Error submitting feedback', 'error');
     }
   };
 
@@ -373,40 +376,40 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       normalize(editInterview.location) === normalize(initialEditInterview.location) &&
       normalize(editInterview.panel) === normalize(initialEditInterview.panel);
     if (sameEditForm && sameInterview && !editResumeFile) {
-      alert('No change found. Record not updated.');
+      showAlert('No change found. Record not updated.', 'info');
       setIsEditing(false);
       return;
     }
 
     if (!editForm.name || !editForm.email || !editForm.position || !editForm.phone || !editForm.department || !editForm.status || !editInterview?.date || !editInterview?.time || !String(editInterview?.location || '').trim() || !editInterview?.panel) {
-      alert('Name, Email, Phone, Position, Education, Status, Date, Time, Location and Panel are required');
+      showAlert('Name, Email, Phone, Position, Education, Status, Date, Time, Location and Panel are required', 'warning');
       return;
     }
     if (!String(editForm.skills || '').trim()) {
-      alert('Skills are required');
+      showAlert('Skills are required', 'warning');
       return;
     }
     if (!editForm.experience || Number(editForm.experience) < 0) {
-      alert('Please enter valid experience');
+      showAlert('Please enter valid experience', 'warning');
       return;
     }
     if (!editResumeFile && !hasResume) {
-      alert('Resume is required');
+      showAlert('Resume is required', 'warning');
       return;
     }
     if (!isValidEmail(editForm.email)) {
-      alert('Please enter a valid email address');
+      showAlert('Please enter a valid email address', 'warning');
       return;
     }
     const phoneDigits = getDigits(editForm.phone);
     if (phoneDigits.length !== 10) {
-      alert('Phone number must be exactly 10 digits');
+      showAlert('Phone number must be exactly 10 digits', 'warning');
       return;
     }
 
     const selectedStatus = Number(editForm.status);
     if (editInterview?.date && editInterview?.time && isPastDateTime(editInterview.date, editInterview.time)) {
-      alert('Back date/time is not allowed for interview scheduling');
+      showAlert('Back date/time is not allowed for interview scheduling', 'error');
       return;
     }
     const selectedPanelId = String(editInterview?.panel || '').trim();
@@ -430,11 +433,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       const ext = (editResumeFile.name.split('.').pop() || '').toLowerCase();
       const allowed = ['pdf', 'doc', 'docx'];
       if (!allowed.includes(ext)) {
-        alert('Resume must be PDF, DOC, or DOCX');
+        showAlert('Resume must be PDF, DOC, or DOCX', 'warning');
         return;
       }
       if (editResumeFile.size > 5 * 1024 * 1024) {
-        alert('Resume size must be 5MB or less');
+        showAlert('Resume size must be 5MB or less', 'warning');
         return;
       }
     }
@@ -468,7 +471,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           });
           const interviewResult = await interviewResponse.json();
           if (!interviewResult.success) {
-            alert('Candidate updated but interview update failed');
+            showAlert('Candidate updated but interview update failed', 'warning');
           }
         }
 
@@ -482,11 +485,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
         }
 
         if (resumeUploadError) {
-          alert(`Candidate updated, but resume upload failed: ${resumeUploadError}`);
+          showAlert(`Candidate updated, but resume upload failed: ${resumeUploadError}`, 'warning');
         } else if (scheduleLabel) {
-          alert(`Candidate updated successfully! ${scheduleLabel}.`);
+          showAlert(`Candidate updated successfully! ${scheduleLabel}.`, 'success');
         } else {
-          alert('Candidate updated successfully!');
+          showAlert('Candidate updated successfully!', 'success');
         }
         if (openL2FeedbackOnSuccess && showTabs) {
           setTab('feedback');
@@ -495,11 +498,11 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
         setEditResumeFile(null);
         fetchCandidateDetails();
       } else {
-        alert(result.message || 'Failed to update candidate');
+        showAlert(result.message || 'Failed to update candidate', 'error');
       }
     } catch (error) {
       console.error('Error updating candidate:', error);
-      alert('Error updating candidate');
+      showAlert('Error updating candidate', 'error');
     } finally {
       setUpdating(false);
     }
@@ -749,7 +752,9 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   );
 
   return (
-    <Modal onClose={onClose} wide>
+    <>
+      {alert && <AlertModal message={alert.message} type={alert.type} onClose={closeAlert} />}
+      <Modal onClose={onClose} wide>
       <div className={s.hero}>
         <div className={s.heroTop}>
           <div className={s.heroLeft}>
@@ -1126,6 +1131,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
         )}
       </div>
     </Modal>
+    </>
   );
 }
 

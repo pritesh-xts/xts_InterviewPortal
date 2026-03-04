@@ -6,10 +6,13 @@ import AddCandidateModal from './modals/AddCandidateModal';
 import ScheduleInterviewModal from './modals/ScheduleInterviewModal';
 import CandidateModal from './modals/CandidateModal';
 import { getStatuses } from '../api/InterviewPortalApis';
+import { useAlert } from '../hooks/useAlert';
+import { AlertModal } from './ui/AlertModal';
 import s from './CandidatesModule.module.css';
 import { API_BASE } from '../api/InterviewPortalApis';
 
 export default function CandidatesModule({ candidates, activeRole, onAddCandidate, user, onRefresh }) {
+  const { alert, showAlert, closeAlert } = useAlert();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
@@ -60,8 +63,9 @@ export default function CandidatesModule({ candidates, activeRole, onAddCandidat
       const result = await response.json();
 
       if (result.success) {
-        alert('Interview scheduled successfully!');
-        window.location.reload();
+        setShowSchedule(false);
+        setScheduleCandidate(null);
+        showAlert('Interview scheduled successfully!', 'success');
         return { success: true };
       } else {
         return { success: false, message: result.message };
@@ -89,18 +93,27 @@ const handleStatusChange = async (candidateId, statusId) => {
     console.log("API result:", result);
 
     if (result.success) {
-      alert("Status updated successfully");
+      showAlert("Status updated successfully", 'success');
       fetchCandidates();
     } else {
-      alert(result.message);
+      showAlert(result.message, 'error');
     }
   } catch (error) {
     console.error("Error:", error);
   }
 };
 
+  const handleAlertClose = () => {
+    closeAlert();
+    if (alert?.type === 'success') {
+      window.location.reload();
+    }
+  };
+
   return (
-    <div className={s.root}>
+    <>
+      {alert && <AlertModal message={alert.message} type={alert.type} onClose={handleAlertClose} />}
+      <div className={s.root}>
       <div className={s.head}>
         <div>
           <h2 className={s.title}>Candidates</h2>
@@ -149,5 +162,6 @@ const handleStatusChange = async (candidateId, statusId) => {
       )}
       {selected && <CandidateModal candidate={selected} onClose={() => { setSelected(null); onRefresh && onRefresh(); }} activeRole={activeRole} user={user} />}
     </div>
+    </>
   );
 }
