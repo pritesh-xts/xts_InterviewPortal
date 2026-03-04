@@ -248,8 +248,8 @@ const renderTable = (data) => {
             <th>Phone</th>
             <th>Position</th>
             <th>Status</th>
-            <th>L1 Feedback</th>
-            <th>L2 Feedback</th>
+            {/* <th>L1 Feedback</th>
+            <th>L2 Feedback</th> */}
           </tr>
         </thead>
 
@@ -287,7 +287,7 @@ const renderTable = (data) => {
               </td>
 
               {/* L1 Feedback Column */}
-              <td className="border-0 py-3 text-muted">
+              {/* <td className="border-0 py-3 text-muted">
                 {c.L1_feedback ? (
                   <span className="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
                     {c.L1_feedback}
@@ -295,10 +295,10 @@ const renderTable = (data) => {
                 ) : (
                   "N/A"
                 )}
-              </td>
+              </td> */}
 
               {/* L2 Feedback Column */}
-              <td className="border-0 pe-4 py-3 text-muted">
+              {/* <td className="border-0 pe-4 py-3 text-muted">
                 {c.L2_feedback ? (
                   <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
                     {c.L2_feedback}
@@ -306,7 +306,7 @@ const renderTable = (data) => {
                 ) : (
                   "N/A"
                 )}
-              </td>
+              </td> */}
             </tr>
           ))}
         </tbody>
