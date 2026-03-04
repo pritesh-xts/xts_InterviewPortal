@@ -15,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
 class Database
 {
     private $host = "localhost";
-    private $db_name = "xts_InterviewPortal";
+    private $db_name = "xts_interviewportal";
     private $username = "root";
-    private $password = "root";
+    private $password = "";
     public $conn;
 
     public function getConnection()
