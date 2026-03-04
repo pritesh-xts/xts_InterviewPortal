@@ -368,7 +368,8 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       normalize(editForm.experience) === normalize(initialEditForm.experience) &&
       normalize(editForm.resume) === normalize(initialEditForm.resume) &&
       normalize(editForm.skills) === normalize(initialEditForm.skills) &&
-      normalize(editForm.status) === normalize(initialEditForm.status);
+      normalize(editForm.status) === normalize(initialEditForm.status) &&
+      normalize(editForm.reason) === normalize(initialEditForm.reason);
     const sameInterview =
       normalize(editInterview.interviewId) === normalize(initialEditInterview.interviewId) &&
       normalize(editInterview.date) === normalize(initialEditInterview.date) &&
