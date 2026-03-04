@@ -353,7 +353,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
   const handleUpdateCandidate = async () => {
     if (!canEdit) {
-      alert('Edit is disabled after L1 feedback submission. View-only access is enabled.');
+      showAlert('Edit is disabled after L1 feedback submission. View-only access is enabled.', 'warning');
       setIsEditing(false);
       return;
     }
@@ -511,21 +511,21 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
   const handleQuickStatusUpdate = async () => {
     if (!isHR) {
-      alert('Only HR can update status from this section.');
+      showAlert('Only HR can update status from this section.', 'warning');
       return;
     }
 
     const selectedStatus = Number(quickStatus || 0);
     if (!selectedStatus) {
-      alert('Please select a valid status');
+      showAlert('Please select a valid status', 'warning');
       return;
     }
     if (l2OfferStatusIds.has(selectedStatus) && !hasL2FeedbackOutcome) {
-      alert('Offer statuses are available only after L2 feedback is submitted as L2 Clear or On Hold after L2.');
+      showAlert('Offer statuses are available only after L2 feedback is submitted as L2 Clear or On Hold after L2.', 'warning');
       return;
     }
     if (selectedStatus === 11 && !String(quickStatusReason || '').trim()) {
-      alert('Reason is required for Offer On Hold.');
+      showAlert('Reason is required for Offer On Hold.', 'warning');
       return;
     }
 
@@ -543,15 +543,15 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       });
       const result = await response.json();
       if (result.success) {
-        alert('Status updated successfully');
+        showAlert('Status updated successfully', 'success');
         setForceOfferDecisionEdit(false);
         await fetchCandidateDetails();
       } else {
-        alert(result.message || 'Failed to update status');
+        showAlert(result.message || 'Failed to update status', 'error');
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Error updating status');
+      showAlert('Error updating status', 'error');
     } finally {
       setUpdating(false);
     }
