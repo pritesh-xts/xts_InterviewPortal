@@ -171,63 +171,148 @@ const downloadByDate = () => {
 };
 
   /* -------------------- TABLE RENDER -------------------- */
-  const renderTable = (data) => {
-    if (!data.length)
-      return (
-        <div className="text-center text-muted py-4">
-          No Data Available
-        </div>
-      );
+  // const renderTable = (data) => {
+  //   if (!data.length)
+  //     return (
+  //       <div className="text-center text-muted py-4">
+  //         No Data Available
+  //       </div>
+  //     );
 
+  //   return (
+  //     <div className="table-responsive bg-white shadow-sm rounded-4 p-3">
+  //       <table className={`table align-middle mb-0 ${styles.reportTable}`}>
+  //         <thead>
+  //           <tr>
+  //             <th>ID</th>
+  //             <th>Name</th>
+  //             <th>Phone</th>
+  //             <th>Position</th>
+  //             <th>Status</th>
+  //           </tr>
+  //         </thead>
+
+  //         <tbody>
+  //           {data.map((c, index) => (
+  //             <tr
+  //               key={c.Candidate_id}
+  //               style={{
+  //                 background: index % 2 === 0 ? "#f8fafc" : "#ffffff",
+  //                 boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+  //               }}
+  //             >
+  //               <td className="border-0 ps-4 py-3 fw-semibold text-secondary">
+  //                 {c.Candidate_id}
+  //               </td>
+
+  //               <td className="border-0 py-3 fw-bold text-dark">
+  //                 {c.Candidate_name}
+  //               </td>
+
+  //               <td className="border-0 py-3 text-muted">
+  //                 {c.Candidate_phone}
+  //               </td>
+
+  //               <td className="border-0 py-3">
+  //                 <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
+  //                   {c.Candidate_position}
+  //                 </span>
+  //               </td>
+
+  //               <td className="border-0 pe-4 py-3">
+  //                 <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+  //                   {c.Status_description || "N/A"}
+  //                 </span>
+  //               </td>
+  //             </tr>
+  //           ))}
+  //         </tbody>
+  //       </table>
+
+  /* -------------------- TABLE RENDER -------------------- */
+const renderTable = (data) => {
+  if (!data.length)
     return (
-      <div className="table-responsive bg-white shadow-sm rounded-4 p-3">
-        <table className={`table align-middle mb-0 ${styles.reportTable}`}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Position</th>
-              <th>Status</th>
+      <div className="text-center text-muted py-4">
+        No Data Available
+      </div>
+    );
+
+  return (
+    <div className="table-responsive bg-white shadow-sm rounded-4 p-3">
+      <table className={`table align-middle mb-0 ${styles.reportTable}`}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Position</th>
+            <th>Status</th>
+            <th>L1 Feedback</th>
+            <th>L2 Feedback</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {data.map((c, index) => (
+            <tr
+              key={c.Candidate_id}
+              style={{
+                background: index % 2 === 0 ? "#f8fafc" : "#ffffff",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+              }}
+            >
+              <td className="border-0 ps-4 py-3 fw-semibold text-secondary">
+                {c.Candidate_id}
+              </td>
+
+              <td className="border-0 py-3 fw-bold text-dark">
+                {c.Candidate_name}
+              </td>
+
+              <td className="border-0 py-3 text-muted">
+                {c.Candidate_phone}
+              </td>
+
+              <td className="border-0 py-3">
+                <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
+                  {c.Candidate_position}
+                </span>
+              </td>
+
+              <td className="border-0 py-3">
+                <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                  {c.Status_description || "N/A"}
+                </span>
+              </td>
+
+              {/* L1 Feedback Column */}
+              <td className="border-0 py-3 text-muted">
+                {c.L1_feedback ? (
+                  <span className="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                    {c.L1_feedback}
+                  </span>
+                ) : (
+                  "N/A"
+                )}
+              </td>
+
+              {/* L2 Feedback Column */}
+              <td className="border-0 pe-4 py-3 text-muted">
+                {c.L2_feedback ? (
+                  <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
+                    {c.L2_feedback}
+                  </span>
+                ) : (
+                  "N/A"
+                )}
+              </td>
             </tr>
-          </thead>
+          ))}
+        </tbody>
+      </table>
 
-          <tbody>
-            {data.map((c, index) => (
-              <tr
-                key={c.Candidate_id}
-                style={{
-                  background: index % 2 === 0 ? "#f8fafc" : "#ffffff",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                }}
-              >
-                <td className="border-0 ps-4 py-3 fw-semibold text-secondary">
-                  {c.Candidate_id}
-                </td>
-
-                <td className="border-0 py-3 fw-bold text-dark">
-                  {c.Candidate_name}
-                </td>
-
-                <td className="border-0 py-3 text-muted">
-                  {c.Candidate_phone}
-                </td>
-
-                <td className="border-0 py-3">
-                  <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
-                    {c.Candidate_position}
-                  </span>
-                </td>
-
-                <td className="border-0 pe-4 py-3">
-                  <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
-                    {c.Status_description || "N/A"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* DOWNLOAD MODAL remains same below */}
 
         {/* REPORT DOWNLOAD POPUP */}
         
@@ -305,7 +390,7 @@ const downloadByDate = () => {
               className="btn btn-success w-100 rounded-3"
               onClick={downloadByDate}
             >
-              ⬇ Download By Date
+               Download By Date
             </button>
 
             <button

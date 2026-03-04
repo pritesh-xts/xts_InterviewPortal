@@ -8,33 +8,61 @@ if (!$conn) {
     die("Database connection failed.");
 }
 
-$statusMap = [
-    1 => "L1 Clear",
-    2 => "L1 Reject",
-    3 => "On Hold after L1",
-    4 => "L2 Clear",
-    5 => "L2 Reject",
-    6 => "On Hold after L2",
-    7 => "Pending",
-    8 => "L1 Interview Confirmed",
-    9 => "L2 Interview Confirmed",
-    10 => "Offer Rolled Out",
-    11 => "Offer Hold On"
-];
-
 $type = $_GET['type'] ?? '';
 $filename = "report.xls";
 
 if ($type == "current") {
-    $query = "SELECT c.*, s.Status_description 
-              FROM mst_candidates c
-              LEFT JOIN mst_application_status s ON c.Current_status = s.Status_id
-              WHERE c.Isactive = 1";
+
+    $query = "
+        SELECT 
+            c.Candidate_id,
+            c.Candidate_name,
+            c.Candidate_phone,
+            c.Candidate_email,
+            c.Candidate_position,
+            c.Candidate_department,
+            c.Candidate_experience,
+            c.Candidate_skills,
+            s.Status_description,
+
+            MAX(CASE 
+                WHEN t.Feedback_by = 5 THEN t.Feedback 
+            END) AS L1_feedback,
+
+            MAX(CASE 
+                WHEN t.Feedback_by = 2 THEN t.Feedback 
+            END) AS L2_feedback
+
+        FROM mst_candidates c
+
+        LEFT JOIN mst_application_status s 
+            ON c.Current_status = s.Status_id
+
+        LEFT JOIN tbl_interview_details t 
+            ON c.Candidate_id = t.Candidate_id
+            AND t.Isactive = 1
+
+        WHERE c.Isactive = 1
+
+        GROUP BY 
+            c.Candidate_id,
+            c.Candidate_name,
+            c.Candidate_phone,
+            c.Candidate_email,
+            c.Candidate_position,
+            c.Candidate_department,
+            c.Candidate_experience,
+            c.Candidate_skills,
+            s.Status_description
+    ";
+
     $stmt = $conn->prepare($query);
     $stmt->execute();
+
     $filename = strtolower(date('M_Y')) . "_report.xls";
 }
 else if ($type == "custom") {
+
     $from = $_GET['from'] ?? '';
     $to = $_GET['to'] ?? '';
 
@@ -42,11 +70,53 @@ else if ($type == "custom") {
         die("Please provide both from and to dates");
     }
 
-    $query = "SELECT c.*, s.Status_description 
-              FROM mst_candidates c
-              LEFT JOIN mst_application_status s ON c.Current_status = s.Status_id
-              WHERE c.Isactive = 1";
+    $query = "
+        SELECT 
+            c.Candidate_id,
+            c.Candidate_name,
+            c.Candidate_phone,
+            c.Candidate_email,
+            c.Candidate_position,
+            c.Candidate_department,
+            c.Candidate_experience,
+            c.Candidate_skills,
+            s.Status_description,
+
+            MAX(CASE 
+                WHEN t.Feedback_by = 5 THEN t.Feedback 
+            END) AS L1_feedback,
+
+            MAX(CASE 
+                WHEN t.Feedback_by = 2 THEN t.Feedback 
+            END) AS L2_feedback
+
+        FROM mst_candidates c
+
+        LEFT JOIN mst_application_status s 
+            ON c.Current_status = s.Status_id
+
+        LEFT JOIN tbl_interview_details t 
+            ON c.Candidate_id = t.Candidate_id
+            AND t.Isactive = 1
+
+        WHERE c.Isactive = 1
+        AND DATE(t.DateTime) BETWEEN :from AND :to
+
+        GROUP BY 
+            c.Candidate_id,
+            c.Candidate_name,
+            c.Candidate_phone,
+            c.Candidate_email,
+            c.Candidate_position,
+            c.Candidate_department,
+            c.Candidate_experience,
+            c.Candidate_skills,
+            s.Status_description
+    ";
+
     $stmt = $conn->prepare($query);
+    $stmt->bindParam(':from', $from);
+    $stmt->bindParam(':to', $to);
     $stmt->execute();
 
     $fromFormatted = date('d_m_Y', strtotime($from));
@@ -62,22 +132,26 @@ header("Content-Disposition: attachment; filename={$filename}");
 header("Pragma: no-cache");
 header("Expires: 0");
 
+/* -------- UPDATED COLUMNS (Resume Removed) -------- */
+
 $columns = [
-    "Candidate_id",
-    "Candidate_name",
-    "Candidate_phone",
-    "Candidate_email",
-    "Candidate_position",
-    "Candidate_department",
-    "Candidate_experience",
-    "Candidate_skills",
-    "Current_status",
-    "Reason",
-    "Candidate_resume_link"
+    "Candidate ID",
+    "Name",
+    "Phone",
+    "Email",
+    "Position",
+    "Department",
+    "Experience",
+    "Skills",
+    "Status",
+    "L1 Feedback",
+    "L2 Feedback"
 ];
+
 echo implode("\t", $columns) . "\n";
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
     $data = [
         $row['Candidate_id'],
         $row['Candidate_name'],
@@ -87,10 +161,11 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $row['Candidate_department'],
         $row['Candidate_experience'],
         $row['Candidate_skills'],
-        $row['Status_description'] ?? $statusMap[$row['Current_status']] ?? "Unknown",
-        $row['Reason'] ?? '-',
-        $row['Candidate_resume_link']
+        $row['Status_description'] ?? 'Unknown',
+        $row['L1_feedback'] ?? '-',
+        $row['L2_feedback'] ?? '-'
     ];
+
     echo implode("\t", $data) . "\n";
 }
 
