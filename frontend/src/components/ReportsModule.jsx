@@ -59,9 +59,12 @@
 // p-New Updated  
 import { useMemo, useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useAlert } from '../hooks/useAlert';
+import { AlertModal } from './ui/AlertModal';
 import styles from "./ReportsModule.module.css";
 
 export default function ReportsModule({ candidates }) {
+   const { alert, showAlert, closeAlert } = useAlert();
    const API_BASE = import.meta.env.VITE_API_URL;
   /* -------------------- ACTIVE TAB -------------------- */
   const [activeTab, setActiveTab] = useState(() => {
@@ -160,7 +163,7 @@ export default function ReportsModule({ candidates }) {
 
 const downloadByDate = () => {
   if (!fromDate || !toDate) {
-    alert("Please select both dates");
+    showAlert("Please select both dates", 'warning');
     return;
   }
 
@@ -450,7 +453,9 @@ const renderTable = (data) => {
 
   /* -------------------- RETURN -------------------- */
   return (
-    <div className="container py-4">
+    <>
+      {alert && <AlertModal message={alert.message} type={alert.type} onClose={closeAlert} />}
+      <div className="container py-4">
       <h4 className="fw-bold mb-4 text-dark">
         Reports & Analytics
       </h4>
@@ -529,5 +534,6 @@ const renderTable = (data) => {
           renderTable(applyFilters(stats.completedCandidates))}
       </div>
     </div>
+    </>
   );
 }
