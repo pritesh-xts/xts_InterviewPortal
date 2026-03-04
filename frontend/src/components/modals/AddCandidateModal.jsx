@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Modal, Input, Select, Btn } from '../ui';
 import { Icons } from '../ui/Icons';
+import { useAlert } from '../../hooks/useAlert';
+import { AlertModal } from '../ui/AlertModal';
 import s from './AddCandidateModal.module.css';
 
 export default function AddCandidateModal({ onClose, onAdd, user }) {
+  const { alert, showAlert, closeAlert } = useAlert();
   const [form, setForm] = useState({ name: '', position: '', primarySkill: '', experience: '', email: '', phone: '', skills: '', department: 'Engineering', status: '7' });
   const [resumeFile, setResumeFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -29,34 +32,34 @@ export default function AddCandidateModal({ onClose, onAdd, user }) {
 
   const submit = async () => {
     if (!form.name || !form.position || !form.primarySkill || !form.email || !form.phone || !form.department) {
-      alert('Name, Position, Primary Skill, Email, Phone, and Education are required.');
+      showAlert('Name, Position, Primary Skill, Email, Phone, and Education are required.', 'warning');
       return;
     }
     if (!String(form.skills || '').trim()) {
-      alert('Skills are required');
+      showAlert('Skills are required', 'warning');
       return;
     }
     if (!form.experience || Number(form.experience) < 0) {
-      alert('Please enter valid experience');
+      showAlert('Please enter valid experience', 'warning');
       return;
     }
     if (!resumeFile) {
-      alert('Resume is required');
+      showAlert('Resume is required', 'warning');
       return;
     }
     if (!isValidEmail(form.email)) {
-      alert('Please enter a valid email address');
+      showAlert('Please enter a valid email address', 'warning');
       return;
     }
     const phoneDigits = getDigits(form.phone);
     if (phoneDigits.length !== 10) {
-      alert('Phone number must be exactly 10 digits');
+      showAlert('Phone number must be exactly 10 digits', 'warning');
       return;
     }
 
     const resumeError = validateResume(resumeFile);
     if (resumeError) {
-      alert(resumeError);
+      showAlert(resumeError, 'warning');
       return;
     }
 
@@ -66,17 +69,19 @@ export default function AddCandidateModal({ onClose, onAdd, user }) {
 
     if (result?.success) {
       if (result.uploadError) {
-        alert(`Candidate added, but resume upload failed: ${result.uploadError}`);
+        showAlert(`Candidate added, but resume upload failed: ${result.uploadError}`, 'warning');
       }
       onClose();
     } else {
-      alert(result?.message || 'Failed to add candidate');
+      showAlert(result?.message || 'Failed to add candidate', 'error');
     }
   };
   const depts = ['MTech', 'Masters', 'BTech', 'Bachelors', 'CDAC', 'Diploma', 'Other'].map(d => ({ value: d, label: d }));
 
   return (
-    <Modal onClose={onClose}>
+    <>
+      {alert && <AlertModal message={alert.message} type={alert.type} onClose={closeAlert} />}
+      <Modal onClose={onClose}>
       <div className={s.content}>
         <div className={s.head}>
           <div>
@@ -125,5 +130,6 @@ export default function AddCandidateModal({ onClose, onAdd, user }) {
         </div>
       </div>
     </Modal>
+    </>
   );
 }
