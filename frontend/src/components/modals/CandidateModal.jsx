@@ -353,7 +353,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
   const handleUpdateCandidate = async () => {
     if (!canEdit) {
-      alert('Edit is disabled after L1 feedback submission. View-only access is enabled.');
+      showAlert('Edit is disabled after L1 feedback submission. View-only access is enabled.', 'warning');
       setIsEditing(false);
       return;
     }
@@ -512,21 +512,21 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
 
   const handleQuickStatusUpdate = async () => {
     if (!isHR) {
-      alert('Only HR can update status from this section.');
+      showAlert('Only HR can update status from this section.', 'warning');
       return;
     }
 
     const selectedStatus = Number(quickStatus || 0);
     if (!selectedStatus) {
-      alert('Please select a valid status');
+      showAlert('Please select a valid status', 'warning');
       return;
     }
     if (l2OfferStatusIds.has(selectedStatus) && !hasL2FeedbackOutcome) {
-      alert('Offer statuses are available only after L2 feedback is submitted as L2 Clear or On Hold after L2.');
+      showAlert('Offer statuses are available only after L2 feedback is submitted as L2 Clear or On Hold after L2.', 'warning');
       return;
     }
     if (selectedStatus === 11 && !String(quickStatusReason || '').trim()) {
-      alert('Reason is required for Offer On Hold.');
+      showAlert('Reason is required for Offer On Hold.', 'warning');
       return;
     }
 
@@ -544,29 +544,16 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       });
       const result = await response.json();
       if (result.success) {
-        alert('Status updated successfully');
-        const nextReason = selectedStatus === 11 ? String(quickStatusReason || '').trim() : null;
-        const nextStatusLabel = statuses.find(st => Number(st.Status_id) === selectedStatus)?.Status_description;
-        setCandidateDetails(prev => {
-          const base = prev || data || {};
-          return {
-            ...base,
-            Current_status: selectedStatus,
-            Status_description: nextStatusLabel || base.Status_description,
-            Reason: nextReason
-          };
-        });
-        setQuickStatus(String(selectedStatus));
-        setQuickStatusReason(nextReason || '');
+        showAlert('Status updated successfully', 'success');
         setForceOfferDecisionEdit(false);
         await fetchCandidateDetails();
         onRefresh && onRefresh();
       } else {
-        alert(result.message || 'Failed to update status');
+        showAlert(result.message || 'Failed to update status', 'error');
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Error updating status');
+      showAlert('Error updating status', 'error');
     } finally {
       setUpdating(false);
     }
@@ -771,200 +758,200 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     <>
       {alert && <AlertModal message={alert.message} type={alert.type} onClose={closeAlert} />}
       <Modal onClose={onClose} wide>
-      <div className={s.hero}>
-        <div className={s.heroTop}>
-          <div className={s.heroLeft}>
-            <Avatar name={name} size={56} />
-            <div>
-              <h2 className={s.name}>{name}</h2>
-              <p className={s.position}>{position}</p>
-              <span className={s.statusChip}>{status}</span>
+        <div className={s.hero}>
+          <div className={s.heroTop}>
+            <div className={s.heroLeft}>
+              <Avatar name={name} size={56} />
+              <div>
+                <h2 className={s.name}>{name}</h2>
+                <p className={s.position}>{position}</p>
+                <span className={s.statusChip}>{status}</span>
+              </div>
+            </div>
+            <div className={s.heroActions}>
+              {canEdit && !isEditing && tab === 'details' && <Btn onClick={() => setIsEditing(true)} variant="primary" small>Edit</Btn>}
+              <Btn onClick={onClose} variant="ghost" small><Icons.X /></Btn>
             </div>
           </div>
-          <div className={s.heroActions}>
-            {canEdit && !isEditing && tab === 'details' && <Btn onClick={() => setIsEditing(true)} variant="primary" small>Edit</Btn>}
-            <Btn onClick={onClose} variant="ghost" small><Icons.X /></Btn>
-          </div>
+          {showTabs && (
+            <div className={s.tabs}>
+              {['details', 'feedback', 'history'].map(t => (
+                <button key={t} onClick={() => setTab(t)} className={`${s.tabBtn} ${tab == t ? s.tabBtnActive : ''}`}>{t}</button>
+              ))}
+            </div>
+          )}
         </div>
-        {showTabs && (
-          <div className={s.tabs}>
-            {['details', 'feedback', 'history'].map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`${s.tabBtn} ${tab == t ? s.tabBtnActive : ''}`}>{t}</button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className={s.content}>
-        {tab == 'details' && (
-          <>
-            {isEditing ? (
-              <div>
-                <h3 className={s.sectionTitle}>Edit Candidate</h3>
-                <div className={s.grid2}>
-                  <Input label="Name *" value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
-                  <Input label="Email *" value={editForm.email} onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))} />
-                  <Input label="Phone *" value={editForm.phone} maxLength={10} inputMode="numeric" onChange={(e) => setEditPhone(e.target.value)} />
-                  <Input label="Position *" value={editForm.position} onChange={(e) => setEditForm(f => ({ ...f, position: e.target.value }))} />
-                  <Select label="Education *" options={depts} value={editForm.department} onChange={(e) => setEditForm(f => ({ ...f, department: e.target.value }))} />
-                  <Input label="Experience (years) *" type="number" step="0.1" min="0" value={editForm.experience} onChange={(e) => setEditForm(f => ({ ...f, experience: e.target.value }))} />
-                  <div className={s.fileField}>
-                    <label className={s.fileLabel}>Resume (PDF/DOC/DOCX, max 5MB) *</label>
-                    <input
-                      className={s.fileInput}
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => setEditResumeFile(e.target.files?.[0] || null)}
-                    />
-                    <p className={s.fileName}>
-                      {editResumeFile ? editResumeFile.name : (hasResume ? `Current: ${resumeDisplay}` : 'No resume uploaded')}
-                    </p>
-                  </div>
-                  <Select label="Status *" options={hrStatusOptions} value={editForm.status} onChange={(e) => setEditForm(f => ({ ...f, status: e.target.value }))} />
-                  <div className={s.span2}>
-                    <Input label="Skills (comma-separated) *" value={editForm.skills} onChange={(e) => setEditForm(f => ({ ...f, skills: e.target.value }))} />
-                  </div>
-                  {(hasL2FeedbackOutcome || [10, 11].includes(Number(editForm.status))) && (
+        <div className={s.content}>
+          {tab == 'details' && (
+            <>
+              {isEditing ? (
+                <div>
+                  <h3 className={s.sectionTitle}>Edit Candidate</h3>
+                  <div className={s.grid2}>
+                    <Input label="Name *" value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
+                    <Input label="Email *" value={editForm.email} onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                    <Input label="Phone *" value={editForm.phone} maxLength={10} inputMode="numeric" onChange={(e) => setEditPhone(e.target.value)} />
+                    <Input label="Position *" value={editForm.position} onChange={(e) => setEditForm(f => ({ ...f, position: e.target.value }))} />
+                    <Select label="Education *" options={depts} value={editForm.department} onChange={(e) => setEditForm(f => ({ ...f, department: e.target.value }))} />
+                    <Input label="Experience (years) *" type="number" step="0.1" min="0" value={editForm.experience} onChange={(e) => setEditForm(f => ({ ...f, experience: e.target.value }))} />
+                    <div className={s.fileField}>
+                      <label className={s.fileLabel}>Resume (PDF/DOC/DOCX, max 5MB) *</label>
+                      <input
+                        className={s.fileInput}
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => setEditResumeFile(e.target.files?.[0] || null)}
+                      />
+                      <p className={s.fileName}>
+                        {editResumeFile ? editResumeFile.name : (hasResume ? `Current: ${resumeDisplay}` : 'No resume uploaded')}
+                      </p>
+                    </div>
+                    <Select label="Status *" options={hrStatusOptions} value={editForm.status} onChange={(e) => setEditForm(f => ({ ...f, status: e.target.value }))} />
                     <div className={s.span2}>
-                      <Input label="Reason *" value={editForm.reason || ''} onChange={(e) => setEditForm(f => ({ ...f, reason: e.target.value }))} placeholder="Enter reason for this status" />
+                      <Input label="Skills (comma-separated) *" value={editForm.skills} onChange={(e) => setEditForm(f => ({ ...f, skills: e.target.value }))} />
+                    </div>
+                    {(hasL2FeedbackOutcome || [10, 11].includes(Number(editForm.status))) && (
+                      <div className={s.span2}>
+                        <Input label="Reason *" value={editForm.reason || ''} onChange={(e) => setEditForm(f => ({ ...f, reason: e.target.value }))} placeholder="Enter reason for this status" />
+                      </div>
+                    )}
+                  </div>
+                  {showInterviewEditSection && (
+                    <div className={s.mt24}>
+                      <h4 className={`${s.sectionTitle} ${s.sectionTitleSmall}`}>{interviewEditTitle}</h4>
+                      <div className={s.grid2}>
+                        <Input label="Date *" type="date" min={today} value={editInterview.date} onChange={(e) => setEditInterview(f => ({ ...f, date: e.target.value }))} />
+                        <Select label="Time *" options={timeOptions} value={editInterview.time} onChange={(e) => setEditInterview(f => ({ ...f, time: e.target.value }))} />
+                        <Input label="Location *" value={editInterview.location} onChange={(e) => setEditInterview(f => ({ ...f, location: e.target.value }))} />
+                        <Select label="Panel *" options={panelOptions} value={editInterview.panel} onChange={(e) => setEditInterview(f => ({ ...f, panel: e.target.value }))} />
+                      </div>
                     </div>
                   )}
-                </div>
-                {showInterviewEditSection && (
-                  <div className={s.mt24}>
-                    <h4 className={`${s.sectionTitle} ${s.sectionTitleSmall}`}>{interviewEditTitle}</h4>
-                    <div className={s.grid2}>
-                      <Input label="Date *" type="date" min={today} value={editInterview.date} onChange={(e) => setEditInterview(f => ({ ...f, date: e.target.value }))} />
-                      <Select label="Time *" options={timeOptions} value={editInterview.time} onChange={(e) => setEditInterview(f => ({ ...f, time: e.target.value }))} />
-                      <Input label="Location *" value={editInterview.location} onChange={(e) => setEditInterview(f => ({ ...f, location: e.target.value }))} />
-                      <Select label="Panel *" options={panelOptions} value={editInterview.panel} onChange={(e) => setEditInterview(f => ({ ...f, panel: e.target.value }))} />
-                    </div>
+                  <div className={s.actions}>
+                    <Btn onClick={() => setIsEditing(false)} variant="ghost" disabled={updating}>Cancel</Btn>
+                    <Btn onClick={handleUpdateCandidate} variant="primary" disabled={updating}>{updating ? 'Updating...' : 'Update'}</Btn>
                   </div>
-                )}
-                <div className={s.actions}>
-                  <Btn onClick={() => setIsEditing(false)} variant="ghost" disabled={updating}>Cancel</Btn>
-                  <Btn onClick={handleUpdateCandidate} variant="primary" disabled={updating}>{updating ? 'Updating...' : 'Update'}</Btn>
                 </div>
-              </div>
-            ) : (
-              <>
-                {isHR && hasL2FeedbackOutcome && (
-                  <div className={`${s.interviewCard} ${s.quickStatusCard}`}>
-                    <div className={s.quickStatusHead}>
-                      <Icons.Check />
-                      <h3 className={s.interviewHeadTitle}>Offer Status Update</h3>
-                    </div>
-                    {!isOfferDecisionEditing ? (
-                      <>
-                        <div className={s.historyGrid}>
-                          <p className={s.line}><strong className={s.strong}>Current Decision:</strong> {currentStatusLabel}</p>
-                          {currentStatus === 11 && (
-                            <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Reason:</strong> {existingReason || '-'}</p>
-                          )}
-                        </div>
-                        <div className={s.quickStatusActions}>
-                          <Btn
-                            onClick={() => {
-                              setForceOfferDecisionEdit(true);
-                              setQuickStatus(String(currentStatus));
-                              setQuickStatusReason(existingReason);
-                            }}
-                            variant="ghost"
-                            disabled={!canChangeOfferDecision}
-                          >
-                            Change Decision
-                          </Btn>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className={s.grid2}>
-                          <Select
-                            label="Status *"
-                            options={offerDecisionOptions}
-                            value={quickStatus}
-                            onChange={(e) => {
-                              const next = e.target.value;
-                              setQuickStatus(next);
-                              if (Number(next) !== 11) {
-                                setQuickStatusReason('');
-                              }
-                            }}
-                          />
-                          {selectedQuickStatus === 11 && (
-                            <Input
-                              label="Reason *"
-                              value={quickStatusReason}
-                              onChange={(e) => setQuickStatusReason(e.target.value)}
-                              placeholder="Enter reason for Offer On Hold"
-                            />
-                          )}
-                        </div>
-                        <div className={s.quickStatusActions}>
-                          {hasOfferDecision && (
+              ) : (
+                <>
+                  {isHR && hasL2FeedbackOutcome && (
+                    <div className={`${s.interviewCard} ${s.quickStatusCard}`}>
+                      <div className={s.quickStatusHead}>
+                        <Icons.Check />
+                        <h3 className={s.interviewHeadTitle}>Offer Status Update</h3>
+                      </div>
+                      {!isOfferDecisionEditing ? (
+                        <>
+                          <div className={s.historyGrid}>
+                            <p className={s.line}><strong className={s.strong}>Current Decision:</strong> {currentStatusLabel}</p>
+                            {currentStatus === 11 && (
+                              <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Reason:</strong> {existingReason || '-'}</p>
+                            )}
+                          </div>
+                          <div className={s.quickStatusActions}>
                             <Btn
                               onClick={() => {
-                                setForceOfferDecisionEdit(false);
+                                setForceOfferDecisionEdit(true);
                                 setQuickStatus(String(currentStatus));
                                 setQuickStatusReason(existingReason);
                               }}
                               variant="ghost"
-                              disabled={updating}
+                              disabled={!canChangeOfferDecision}
                             >
-                              Cancel
+                              Change Decision
                             </Btn>
-                          )}
-                          <Btn onClick={handleQuickStatusUpdate} variant="primary" disabled={updating || !canSubmitOfferDecision}>
-                            {updating ? 'Updating...' : (hasOfferDecision ? 'Save Decision' : 'Submit Decision')}
-                          </Btn>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-                <div className={s.infoGrid}>
-                  {[['Email', email], ['Phone', phone], ['Experience', experience], ['Education', department], ['Resume', resumeDisplay]].map(([k, v]) => (
-                    <div key={k} className={s.infoCard}>
-                      <p className={s.infoLabel}>{k}</p>
-                      {k === 'Resume' ? (
-                        hasResume ? (
-                          <a className={s.resumeLink} href={resumeUrl} target="_blank" rel="noreferrer">View Resume</a>
-                        ) : (
-                          <p className={s.resumeEmpty}>{v}</p>
-                        )
+                          </div>
+                        </>
                       ) : (
-                        <p className={s.infoValue}>{v}</p>
+                        <>
+                          <div className={s.grid2}>
+                            <Select
+                              label="Status *"
+                              options={offerDecisionOptions}
+                              value={quickStatus}
+                              onChange={(e) => {
+                                const next = e.target.value;
+                                setQuickStatus(next);
+                                if (Number(next) !== 11) {
+                                  setQuickStatusReason('');
+                                }
+                              }}
+                            />
+                            {selectedQuickStatus === 11 && (
+                              <Input
+                                label="Reason *"
+                                value={quickStatusReason}
+                                onChange={(e) => setQuickStatusReason(e.target.value)}
+                                placeholder="Enter reason for Offer On Hold"
+                              />
+                            )}
+                          </div>
+                          <div className={s.quickStatusActions}>
+                            {hasOfferDecision && (
+                              <Btn
+                                onClick={() => {
+                                  setForceOfferDecisionEdit(false);
+                                  setQuickStatus(String(currentStatus));
+                                  setQuickStatusReason(existingReason);
+                                }}
+                                variant="ghost"
+                                disabled={updating}
+                              >
+                                Cancel
+                              </Btn>
+                            )}
+                            <Btn onClick={handleQuickStatusUpdate} variant="primary" disabled={updating || !canSubmitOfferDecision}>
+                              {updating ? 'Updating...' : (hasOfferDecision ? 'Save Decision' : 'Submit Decision')}
+                            </Btn>
+                          </div>
+                        </>
                       )}
                     </div>
-                  ))}
-                </div>
-                {skills.length > 0 && (
-                  <div className={s.skillsWrap}>
-                    <p className={s.skillsTitle}>SKILLS</p>
-                    <div className={s.skillsList}>
-                      {skills.map((sk, i) => <span key={i} className={s.skill}>{sk}</span>)}
-                    </div>
+                  )}
+                  <div className={s.infoGrid}>
+                    {[['Email', email], ['Phone', phone], ['Experience', experience], ['Education', department], ['Resume', resumeDisplay]].map(([k, v]) => (
+                      <div key={k} className={s.infoCard}>
+                        <p className={s.infoLabel}>{k}</p>
+                        {k === 'Resume' ? (
+                          hasResume ? (
+                            <a className={s.resumeLink} href={resumeUrl} target="_blank" rel="noreferrer">View Resume</a>
+                          ) : (
+                            <p className={s.resumeEmpty}>{v}</p>
+                          )
+                        ) : (
+                          <p className={s.infoValue}>{v}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                )}
-                {interview && (
-                  <div className={s.interviewCard}>
-                    <div className={s.interviewHead}>
-                      <Icons.Calendar />
-                      <h3 className={s.interviewHeadTitle}>Interview Details</h3>
+                  {skills.length > 0 && (
+                    <div className={s.skillsWrap}>
+                      <p className={s.skillsTitle}>SKILLS</p>
+                      <div className={s.skillsList}>
+                        {skills.map((sk, i) => <span key={i} className={s.skill}>{sk}</span>)}
+                      </div>
                     </div>
-                    <div className={s.interviewGrid}>
-                      <p className={s.line}><strong className={s.strong}>Date:</strong> {interviewDate}</p>
-                      <p className={s.line}><strong className={s.strong}>Time:</strong> {interviewTime}</p>
-                      <p className={s.line}><strong className={s.strong}>Location:</strong> {location}</p>
-                      <p className={s.line}><strong className={s.strong}>Panel:</strong> {panelName}</p>
-                      <p className={s.line}><strong className={s.strong}>Invite Response:</strong> {interviewInviteResponseLabel}</p>
-                      <p className={s.line}><strong className={s.strong}>Responded At:</strong> {interviewInviteRespondedAt}</p>
-                      {interview.Feedback && (
-                        <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {interview.Feedback}</p>
-                      )}
+                  )}
+                  {interview && (
+                    <div className={s.interviewCard}>
+                      <div className={s.interviewHead}>
+                        <Icons.Calendar />
+                        <h3 className={s.interviewHeadTitle}>Interview Details</h3>
+                      </div>
+                      <div className={s.interviewGrid}>
+                        <p className={s.line}><strong className={s.strong}>Date:</strong> {interviewDate}</p>
+                        <p className={s.line}><strong className={s.strong}>Time:</strong> {interviewTime}</p>
+                        <p className={s.line}><strong className={s.strong}>Location:</strong> {location}</p>
+                        <p className={s.line}><strong className={s.strong}>Panel:</strong> {panelName}</p>
+                        <p className={s.line}><strong className={s.strong}>Invite Response:</strong> {interviewInviteResponseLabel}</p>
+                        <p className={s.line}><strong className={s.strong}>Responded At:</strong> {interviewInviteRespondedAt}</p>
+                        {interview.Feedback && (
+                          <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {interview.Feedback}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {/* {historyEntries.length > 0 && (
+                  )}
+                  {/* {historyEntries.length > 0 && (
                   <div className={s.historyWrap}>
                     <h3 className={s.historyTitle}>Interview History</h3>
                     <div className={s.timeline}>
@@ -999,154 +986,154 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                     </div>
                   </div>
                 )} */}
-              </>
-            )}
-          </>
-        )}
-        {tab == 'history' && showTabs && (
-          <div>
-            <h3 className={s.sectionTitle}>Feedback History</h3>
-            {historyLoaded && (() => {
-              const allFeedbacks = history.filter(h => {
-                const statusId = Number(h.Status_id);
-                const hasFeedback = String(h.Feedback || '').trim().length > 0;
-                return [1, 2, 3, 4, 5, 6].includes(statusId) && hasFeedback;
-              });
+                </>
+              )}
+            </>
+          )}
+          {tab == 'history' && showTabs && (
+            <div>
+              <h3 className={s.sectionTitle}>Feedback History</h3>
+              {historyLoaded && (() => {
+                const allFeedbacks = history.filter(h => {
+                  const statusId = Number(h.Status_id);
+                  const hasFeedback = String(h.Feedback || '').trim().length > 0;
+                  return [1, 2, 3, 4, 5, 6].includes(statusId) && hasFeedback;
+                });
 
-              if (allFeedbacks.length === 0) {
-                return <p className={s.noHistory}>No feedback history available.</p>;
-              }
+                if (allFeedbacks.length === 0) {
+                  return <p className={s.noHistory}>No feedback history available.</p>;
+                }
 
-              return (
-                <div className={s.historyFeedbackWrap}>
-                  {allFeedbacks.map((entry, idx) => {
-                    const statusId = Number(entry.Status_id);
-                    const isL1 = [1, 2, 3].includes(statusId);
-                    const roundLabel = isL1 ? 'L1 Interview' : 'L2 Interview';
+                return (
+                  <div className={s.historyFeedbackWrap}>
+                    {allFeedbacks.map((entry, idx) => {
+                      const statusId = Number(entry.Status_id);
+                      const isL1 = [1, 2, 3].includes(statusId);
+                      const roundLabel = isL1 ? 'L1 Interview' : 'L2 Interview';
 
-                    return (
-                      <div key={idx} className={s.historyFeedbackCard}>
-                        <div className={s.historyFeedbackHeader}>
-                          <h4 className={s.roundLabel}>{roundLabel}</h4>
-                          <span className={s.feedbackDate}>
-                            {entry.DateTime ? formatISTDate(entry.DateTime) : '-'} {entry.DateTime ? formatISTTime(entry.DateTime) : ''}
-                          </span>
+                      return (
+                        <div key={idx} className={s.historyFeedbackCard}>
+                          <div className={s.historyFeedbackHeader}>
+                            <h4 className={s.roundLabel}>{roundLabel}</h4>
+                            <span className={s.feedbackDate}>
+                              {entry.DateTime ? formatISTDate(entry.DateTime) : '-'} {entry.DateTime ? formatISTTime(entry.DateTime) : ''}
+                            </span>
+                          </div>
+                          <div className={s.historyGrid}>
+                            <p className={s.line}><strong className={s.strong}>Status:</strong> {entry.Interview_status || '-'}</p>
+                            <p className={s.line}><strong className={s.strong}>Panel:</strong> {entry.Panel_name || '-'}</p>
+                            <p className={s.line}><strong className={s.strong}>Location:</strong> {entry.Location || '-'}</p>
+                            <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {entry.Feedback}</p>
+                          </div>
                         </div>
-                        <div className={s.historyGrid}>
-                          <p className={s.line}><strong className={s.strong}>Status:</strong> {entry.Interview_status || '-'}</p>
-                          <p className={s.line}><strong className={s.strong}>Panel:</strong> {entry.Panel_name || '-'}</p>
-                          <p className={s.line}><strong className={s.strong}>Location:</strong> {entry.Location || '-'}</p>
-                          <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {entry.Feedback}</p>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+          {tab == 'feedback' && showTabs && (
+            <div>
+              <h3 className={s.sectionTitle}>Submit Feedback</h3>
+
+              {/* Show L1 feedback for L2 panels, HR, and Admin */}
+              {historyLoaded && (() => {
+                const l1Feedbacks = history.filter(h => {
+                  const statusId = Number(h.Status_id);
+                  const hasFeedback = String(h.Feedback || '').trim().length > 0;
+                  const notCurrentUser = String(h.Feedback_by || '') !== currentUserId;
+                  return [1, 2, 3].includes(statusId) && hasFeedback && notCurrentUser;
+                });
+
+                // Show L1 feedback if:
+                // 1. User is HR (roleId 1) OR Admin (roleId 4) OR
+                // 2. Panel is scheduled for L2 and there are L1 feedbacks from OTHER panels
+                const isHRorAdmin = [1, 4].includes(Number(user?.roleId || user?.Role_id));
+                const panelIsL2 = isPanelUser && interview && String(interview.Feedback_by) === currentUserId && Number(interview.Status_id) === 9;
+                const shouldShowL1Feedback = l1Feedbacks.length > 0 && (isHRorAdmin || panelIsL2);
+
+                if (!shouldShowL1Feedback) return null;
+
+                return (
+                  <div className={s.l1FeedbackBox}>
+                    <h4 className={s.l1FeedbackTitle}>L1 Interview Feedback</h4>
+                    {l1Feedbacks.map((l1Entry, idx) => (
+                      <div key={idx} className={s.l1FeedbackCard}>
+                        <div className={s.l1FeedbackGrid}>
+                          <p className={s.line}><strong className={s.strong}>Status:</strong> {l1Entry.Interview_status || '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Panel:</strong> {l1Entry.Panel_name || '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Date:</strong> {l1Entry.DateTime ? formatISTDate(l1Entry.DateTime) : '-'}</p>
+                          <p className={s.line}><strong className={s.strong}>Time:</strong> {l1Entry.DateTime ? formatISTTime(l1Entry.DateTime) : '-'}</p>
+                          <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {l1Entry.Feedback}</p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
-        )}
-        {tab == 'feedback' && showTabs && (
-          <div>
-            <h3 className={s.sectionTitle}>Submit Feedback</h3>
+                    ))}
+                  </div>
+                );
+              })()}
 
-            {/* Show L1 feedback for L2 panels, HR, and Admin */}
-            {historyLoaded && (() => {
-              const l1Feedbacks = history.filter(h => {
-                const statusId = Number(h.Status_id);
-                const hasFeedback = String(h.Feedback || '').trim().length > 0;
-                const notCurrentUser = String(h.Feedback_by || '') !== currentUserId;
-                return [1, 2, 3].includes(statusId) && hasFeedback && notCurrentUser;
-              });
-
-              // Show L1 feedback if:
-              // 1. User is HR (roleId 1) OR Admin (roleId 4) OR
-              // 2. Panel is scheduled for L2 and there are L1 feedbacks from OTHER panels
-              const isHRorAdmin = [1, 4].includes(Number(user?.roleId || user?.Role_id));
-              const panelIsL2 = isPanelUser && interview && String(interview.Feedback_by) === currentUserId && Number(interview.Status_id) === 9;
-              const shouldShowL1Feedback = l1Feedbacks.length > 0 && (isHRorAdmin || panelIsL2);
-
-              if (!shouldShowL1Feedback) return null;
-
-              return (
-                <div className={s.l1FeedbackBox}>
-                  <h4 className={s.l1FeedbackTitle}>L1 Interview Feedback</h4>
-                  {l1Feedbacks.map((l1Entry, idx) => (
-                    <div key={idx} className={s.l1FeedbackCard}>
-                      <div className={s.l1FeedbackGrid}>
-                        <p className={s.line}><strong className={s.strong}>Status:</strong> {l1Entry.Interview_status || '-'}</p>
-                        <p className={s.line}><strong className={s.strong}>Panel:</strong> {l1Entry.Panel_name || '-'}</p>
-                        <p className={s.line}><strong className={s.strong}>Date:</strong> {l1Entry.DateTime ? formatISTDate(l1Entry.DateTime) : '-'}</p>
-                        <p className={s.line}><strong className={s.strong}>Time:</strong> {l1Entry.DateTime ? formatISTTime(l1Entry.DateTime) : '-'}</p>
-                        <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {l1Entry.Feedback}</p>
-                      </div>
+              {canWriteFeedback ? (
+                panelFeedbackLocked ? (
+                  <div className={s.feedbackBox}>
+                    <div className={s.notesWrap}>
+                      <label className={s.notesLabel}>Status</label>
+                      <div className={s.line}><strong className={s.strong}>{panelFeedbackStatusLabel}</strong></div>
                     </div>
-                  ))}
-                </div>
-              );
-            })()}
-
-            {canWriteFeedback ? (
-              panelFeedbackLocked ? (
-                <div className={s.feedbackBox}>
-                  <div className={s.notesWrap}>
-                    <label className={s.notesLabel}>Status</label>
-                    <div className={s.line}><strong className={s.strong}>{panelFeedbackStatusLabel}</strong></div>
+                    <div className={s.notesWrap}>
+                      <label className={s.notesLabel}>Submitted On</label>
+                      <div className={s.line}>{panelFeedbackDate}</div>
+                    </div>
+                    <div className={s.notesWrap}>
+                      <label className={s.notesLabel}>Detailed Notes</label>
+                      <textarea className={s.notes} value={lastPanelFeedback?.Feedback || ''} readOnly />
+                    </div>
+                    <Btn variant="ghost" disabled>Feedback Already Submitted</Btn>
                   </div>
-                  <div className={s.notesWrap}>
-                    <label className={s.notesLabel}>Submitted On</label>
-                    <div className={s.line}>{panelFeedbackDate}</div>
+                ) : (
+                  <div className={s.feedbackBox}>
+                    <Select label="Status" options={panelStatusOptions} value={feedback.statusId} onChange={(e) => setFeedback(f => ({ ...f, statusId: e.target.value }))} />
+                    <div className={s.notesWrap}>
+                      <label className={s.notesLabel}>Detailed Notes</label>
+                      <textarea className={s.notes} value={feedback.notes} onChange={(e) => setFeedback(f => ({ ...f, notes: e.target.value }))} placeholder="Share your observations, strengths, concerns..." />
+                    </div>
+                    <Btn onClick={handleSubmitFeedback} variant="primary">Submit Feedback</Btn>
                   </div>
-                  <div className={s.notesWrap}>
-                    <label className={s.notesLabel}>Detailed Notes</label>
-                    <textarea className={s.notes} value={lastPanelFeedback?.Feedback || ''} readOnly />
-                  </div>
-                  <Btn variant="ghost" disabled>Feedback Already Submitted</Btn>
-                </div>
+                )
               ) : (
-                <div className={s.feedbackBox}>
-                  <Select label="Status" options={panelStatusOptions} value={feedback.statusId} onChange={(e) => setFeedback(f => ({ ...f, statusId: e.target.value }))} />
-                  <div className={s.notesWrap}>
-                    <label className={s.notesLabel}>Detailed Notes</label>
-                    <textarea className={s.notes} value={feedback.notes} onChange={(e) => setFeedback(f => ({ ...f, notes: e.target.value }))} placeholder="Share your observations, strengths, concerns..." />
-                  </div>
-                  <Btn onClick={handleSubmitFeedback} variant="primary">Submit Feedback</Btn>
-                </div>
-              )
-            ) : (
-              submittedFeedbackEntries.length > 0 ? (
-                <div className={s.historyFeedbackWrap}>
-                  {submittedFeedbackEntries.map((entry, idx) => {
-                    const statusId = Number(entry.Status_id);
-                    const isL1 = [1, 2, 3].includes(statusId);
-                    const roundLabel = isL1 ? 'L1 Interview' : 'L2 Interview';
+                submittedFeedbackEntries.length > 0 ? (
+                  <div className={s.historyFeedbackWrap}>
+                    {submittedFeedbackEntries.map((entry, idx) => {
+                      const statusId = Number(entry.Status_id);
+                      const isL1 = [1, 2, 3].includes(statusId);
+                      const roundLabel = isL1 ? 'L1 Interview' : 'L2 Interview';
 
-                    return (
-                      <div key={idx} className={s.historyFeedbackCard}>
-                        <div className={s.historyFeedbackHeader}>
-                          <h4 className={s.roundLabel}>{roundLabel}</h4>
-                          <span className={s.feedbackDate}>
-                            {entry.DateTime ? formatISTDate(entry.DateTime) : '-'} {entry.DateTime ? formatISTTime(entry.DateTime) : ''}
-                          </span>
+                      return (
+                        <div key={idx} className={s.historyFeedbackCard}>
+                          <div className={s.historyFeedbackHeader}>
+                            <h4 className={s.roundLabel}>{roundLabel}</h4>
+                            <span className={s.feedbackDate}>
+                              {entry.DateTime ? formatISTDate(entry.DateTime) : '-'} {entry.DateTime ? formatISTTime(entry.DateTime) : ''}
+                            </span>
+                          </div>
+                          <div className={s.historyGrid}>
+                            <p className={s.line}><strong className={s.strong}>Status:</strong> {entry.Interview_status || '-'}</p>
+                            <p className={s.line}><strong className={s.strong}>Panel:</strong> {entry.Panel_name || '-'}</p>
+                            <p className={s.line}><strong className={s.strong}>Location:</strong> {entry.Location || '-'}</p>
+                            <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {entry.Feedback}</p>
+                          </div>
                         </div>
-                        <div className={s.historyGrid}>
-                          <p className={s.line}><strong className={s.strong}>Status:</strong> {entry.Interview_status || '-'}</p>
-                          <p className={s.line}><strong className={s.strong}>Panel:</strong> {entry.Panel_name || '-'}</p>
-                          <p className={s.line}><strong className={s.strong}>Location:</strong> {entry.Location || '-'}</p>
-                          <p className={`${s.line} ${s.span2Line}`}><strong className={s.strong}>Feedback:</strong> {entry.Feedback}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className={s.noHistory}>No feedback available yet.</p>
-              )
-            )}
-          </div>
-        )}
-      </div>
-    </Modal>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className={s.noHistory}>No feedback available yet.</p>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </Modal>
     </>
   );
 }
