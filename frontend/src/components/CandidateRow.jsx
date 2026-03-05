@@ -74,8 +74,7 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
   // Check if latest interview invite was rejected
   const inviteRejected = String(c.Latest_invite_response || '').toLowerCase() === 'rejected';
 
-  // HR can change status for L2 Clear/On Hold after L2 to Selected/Rejected
-  const showDropdown = isHR && (currentStatus == 4 || currentStatus == 6);
+
 
   // HR can schedule L1 for Pending candidates (Status 7)
   // HR can schedule L2 for L1 Clear candidates (Status 1)
@@ -145,30 +144,10 @@ export default function CandidateRow({ candidate: c, onClick, user, onStatusChan
           </button>
         )}
         <div className={s.statusWrapper}>
-          {showDropdown ? (
-            <select
-              className={s.statusSelect}
-              value={currentStatus}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => {
-                e.stopPropagation();
-                handleStatusChange(Number(e.target.value));
-              }}
-            >
-              <option value={currentStatus}>
-                {status}
-              </option>
-              <option value={4}>Selected</option>
-              <option value={5}>Rejected</option>
-            </select>
+          {inviteRejected ? (
+            <span className={s.rejectedBadge} title="Panel rejected interview invite">⚠ Panel Rejected - Needs Reschedule</span>
           ) : (
-            <>
-              {inviteRejected ? (
-                <span className={s.rejectedBadge} title="Panel rejected interview invite">⚠ Panel Rejected - Needs Reschedule</span>
-              ) : (
-                <span className={s.status}>{status}</span>
-              )}
-            </>
+            <span className={s.status}>{status}</span>
           )}
         </div>
 
