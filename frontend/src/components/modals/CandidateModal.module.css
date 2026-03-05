@@ -455,3 +455,20 @@
   padding: 40px 20px;
   font-size: 14px;
 }
+
+.quickStatusCard {
+  margin-bottom: 20px;
+}
+
+.quickStatusHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.quickStatusActions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}

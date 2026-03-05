@@ -19,11 +19,11 @@ function App() {
   const [activeRole, setActiveRole] = useState(() => {
     return sessionStorage.getItem('activeRole') || 'hr';
   });
-  
+
   useEffect(() => {
     sessionStorage.setItem('activePage', page);
   }, [page]);
-  
+
   useEffect(() => {
     sessionStorage.setItem('activeRole', activeRole);
   }, [activeRole]);
@@ -151,7 +151,7 @@ function App() {
       <main className={s.main}>
         {page == 'candidates' && <CandidatesModule candidates={candidates} activeRole={activeRole} onAddCandidate={handleAdd} user={user} onRefresh={fetchCandidates} />}
         {page == 'reports' && <ReportsModule candidates={candidates} />}
-        {page == 'users' && user.roleId === 4 && <UserManagement />}
+        {page == 'users' && user.roleId == 4 && <UserManagement />}
       </main>
       {showChangePassword && (
         <ChangePasswordModal

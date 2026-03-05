@@ -251,8 +251,8 @@ const renderTable = (data) => {
             <th>Phone</th>
             <th>Position</th>
             <th>Status</th>
-            {/* <th>L1 Feedback</th>
-            <th>L2 Feedback</th> */}
+            <th>L1 Feedback</th>
+            <th>L2 Feedback</th>
           </tr>
         </thead>
 
@@ -290,7 +290,7 @@ const renderTable = (data) => {
               </td>
 
               {/* L1 Feedback Column */}
-              {/* <td className="border-0 py-3 text-muted">
+              <td className="border-0 py-3 text-muted">
                 {c.L1_feedback ? (
                   <span className="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
                     {c.L1_feedback}
@@ -298,10 +298,10 @@ const renderTable = (data) => {
                 ) : (
                   "N/A"
                 )}
-              </td> */}
+              </td>
 
               {/* L2 Feedback Column */}
-              {/* <td className="border-0 pe-4 py-3 text-muted">
+              <td className="border-0 pe-4 py-3 text-muted">
                 {c.L2_feedback ? (
                   <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
                     {c.L2_feedback}
@@ -309,7 +309,7 @@ const renderTable = (data) => {
                 ) : (
                   "N/A"
                 )}
-              </td> */}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -326,93 +326,173 @@ const renderTable = (data) => {
     <div
       className="modal-backdrop fade show"
       onClick={() => setShowDownload(false)}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
     ></div>
 
     {/* MODAL */}
     <div
       className="modal d-block"
       tabIndex="-1"
-      style={{ background: "rgba(0,0,0,0.6)" }}
+      style={{ zIndex: 1055 }}
     >
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content p-4 rounded-4 shadow-lg border-0">
-
+        <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '16px' }}>
+          
           {/* HEADER */}
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="fw-bold mb-0 text-primary">
-              <i className="bi bi-download me-2"></i>
-              Download Report
-            </h5>
-
-            {/* Close Icon */}
-            <button
-              className="btn btn-sm btn-light rounded-circle shadow-sm"
-              onClick={() => setShowDownload(false)}
-              style={{ width: "32px", height: "32px" }}
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* CURRENT MONTH BUTTON */}
-          <button
-            className="btn btn-primary mb-3 w-100 rounded-3"
-            onClick={downloadCurrentMonth}
-          >
-            Download Current Month Report 
-          </button>
-
-          {/* <div className="text-center my-2 text-muted">OR</div> */}
-
-          {/* DATE RANGE SECTION */}
-          <div className="row g-3">
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">From Date</label>
-              <input
-                type="date"
-                className="form-control rounded-3"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-              />
-            </div>
-
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">To Date</label>
-              <input
-                type="date"
-                className="form-control rounded-3"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-              />
+          <div className="p-4 border-bottom">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 className="fw-bold mb-1 text-dark">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#39bdf1" className="me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'middle' }}>
+                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
+                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                  </svg>
+                  Download Report
+                </h4>
+                <p className="mb-0 small text-muted">Export candidate data to Excel</p>
+              </div>
+              <button
+                className="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                onClick={() => setShowDownload(false)}
+                style={{ width: '36px', height: '36px', padding: 0 }}
+              >
+                <span style={{ fontSize: '20px', lineHeight: 1 }}>×</span>
+              </button>
             </div>
           </div>
 
-          {/* ACTION BUTTONS */}
-          <div className="d-flex gap-2 mt-4">
-            <button
-              className="btn btn-success w-100 rounded-3"
-              onClick={downloadByDate}
-            >
-               Download By Date
-            </button>
+          {/* BODY */}
+          <div className="p-4">
+            {/* CURRENT MONTH OPTION */}
+            <div className="mb-4">
+              <div className="d-flex align-items-center mb-3">
+                <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  backgroundColor: '#39bdf1',
+                  color: 'white'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.56 11.332 3.1 9.73h1.984l.54 1.602h.718L4.444 6h-.696L1.85 11.332zm1.544-4.527L4.9 9.18H3.284l.8-2.375z"/>
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h6 className="mb-0 fw-bold">Current Month Report</h6>
+                  <small className="text-muted">Download {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} data</small>
+                </div>
+              </div>
+              <button
+                className="btn w-100 py-3 fw-semibold"
+                onClick={downloadCurrentMonth}
+                style={{
+                  backgroundColor: '#39bdf1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#2da8d8';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(57, 189, 241, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#39bdf1';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'middle' }}>
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                </svg>
+                Download Now
+              </button>
+            </div>
 
-            <button
-              className="btn btn-outline-danger rounded-3"
-              onClick={() => {
-                setFromDate("");
-                setToDate("");
-              }}
-            >
-              Reset
-            </button>
+            {/* DIVIDER */}
+            <div className="position-relative my-4">
+              <hr style={{ borderColor: '#e5e7eb' }} />
+              <span className="position-absolute top-50 start-50 translate-middle px-3 bg-white text-muted small fw-semibold">OR</span>
+            </div>
+
+            {/* CUSTOM DATE RANGE */}
+            <div>
+              <div className="d-flex align-items-center mb-3">
+                <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  backgroundColor: '#39bdf1',
+                  color: 'white'
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M9 7a1 1 0 0 1 1-1h5v2h-5a1 1 0 0 1-1-1M1 9h4a1 1 0 0 1 0 2H1z"/>
+                    <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h6 className="mb-0 fw-bold">Custom Date Range</h6>
+                  <small className="text-muted">Select specific date range</small>
+                </div>
+              </div>
+              
+              <div className="row g-3 mb-3">
+                <div className="col-6">
+                  <label className="form-label small fw-semibold text-muted mb-2">From Date</label>
+                  <input
+                    type="date"
+                    className="form-control py-2"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    style={{ borderRadius: '10px', border: '2px solid #e5e7eb' }}
+                  />
+                </div>
+                <div className="col-6">
+                  <label className="form-label small fw-semibold text-muted mb-2">To Date</label>
+                  <input
+                    type="date"
+                    className="form-control py-2"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    style={{ borderRadius: '10px', border: '2px solid #e5e7eb' }}
+                  />
+                </div>
+              </div>
+
+              <div className="d-flex gap-2">
+                <button
+                  className="btn flex-grow-1 py-2 fw-semibold"
+                  onClick={downloadByDate}
+                  style={{
+                    backgroundColor: '#39bdf1',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px'
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'middle' }}>
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                  </svg>
+                  Download
+                </button>
+                <button
+                  className="btn btn-outline-secondary py-2"
+                  onClick={() => {
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  style={{ borderRadius: '10px', minWidth: '80px' }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{ verticalAlign: 'middle' }}>
+                    <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
-
-          {/* <button
-            className="btn btn-light mt-3 w-100 rounded-3"
-            onClick={() => setShowDownload(false)}
-          >
-            Close
-          </button> */}
 
         </div>
       </div>
