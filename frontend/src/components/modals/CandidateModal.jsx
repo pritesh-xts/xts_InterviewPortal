@@ -7,7 +7,7 @@ import { AlertModal } from '../ui/AlertModal';
 import s from './CandidateModal.module.css';
 
 
-export default function CandidateModal({ candidate: c, onClose, activeRole, user }) {
+export default function CandidateModal({ candidate: c, onClose, activeRole, user, onRefresh }) {
   const { alert, showAlert, closeAlert } = useAlert();
   const [tab, setTab] = useState('details');
   const [feedback, setFeedback] = useState({ statusId: '', notes: '' });
@@ -498,6 +498,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
         setIsEditing(false);
         setEditResumeFile(null);
         fetchCandidateDetails();
+        onRefresh && onRefresh();
       } else {
         showAlert(result.message || 'Failed to update candidate', 'error');
       }
@@ -544,8 +545,22 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       const result = await response.json();
       if (result.success) {
         alert('Status updated successfully');
+        const nextReason = selectedStatus === 11 ? String(quickStatusReason || '').trim() : null;
+        const nextStatusLabel = statuses.find(st => Number(st.Status_id) === selectedStatus)?.Status_description;
+        setCandidateDetails(prev => {
+          const base = prev || data || {};
+          return {
+            ...base,
+            Current_status: selectedStatus,
+            Status_description: nextStatusLabel || base.Status_description,
+            Reason: nextReason
+          };
+        });
+        setQuickStatus(String(selectedStatus));
+        setQuickStatusReason(nextReason || '');
         setForceOfferDecisionEdit(false);
         await fetchCandidateDetails();
+        onRefresh && onRefresh();
       } else {
         alert(result.message || 'Failed to update status');
       }
