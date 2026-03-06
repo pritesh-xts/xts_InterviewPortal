@@ -63,27 +63,7 @@ try {
     
     $db->commit();
 
-    // Send email notification to candidate based on status
-    $emailResult = null;
-    if ($candidate) {
-        $statusId = intval($data->statusId);
-        $candidateEmail = trim($candidate['Candidate_email']);
-        $candidateName = trim($candidate['Candidate_name']);
-        $position = trim($candidate['Candidate_position']);
-        
-        // Only send rejection emails immediately
-        // L1 Clear email will be sent when HR schedules L2
-        if ($statusId === 2) {
-            // L1 Reject
-            $emailResult = sendCandidateL1RejectEmail($candidateEmail, $candidateName, $position);
-        } elseif ($statusId === 4) {
-            // L2 Clear
-            $emailResult = sendCandidateL2ClearEmail($candidateEmail, $candidateName, $position);
-        } elseif ($statusId === 5) {
-            // L2 Reject
-            $emailResult = sendCandidateL1RejectEmail($candidateEmail, $candidateName, $position);
-        }
-    }
+    // Candidate email notifications are intentionally disabled.
 
     echo json_encode([
         "success" => true,

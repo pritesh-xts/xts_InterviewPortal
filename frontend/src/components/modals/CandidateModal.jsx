@@ -21,6 +21,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
   const [initialEditInterview, setInitialEditInterview] = useState({});
   const [initialFeedback, setInitialFeedback] = useState({ statusId: '', notes: '' });
   const [editResumeFile, setEditResumeFile] = useState(null);
+  const [resumeInputKey, setResumeInputKey] = useState(0);
   const [quickStatus, setQuickStatus] = useState('');
   const [quickStatusReason, setQuickStatusReason] = useState('');
   const [forceOfferDecisionEdit, setForceOfferDecisionEdit] = useState(false);
@@ -179,6 +180,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
           setInitialEditInterview({});
         }
         setEditResumeFile(null);
+        setResumeInputKey((k) => k + 1);
         const statusId = Number(result.data.Current_status ?? 0);
         setQuickStatus([10, 11].includes(statusId) ? String(statusId) : '');
         setQuickStatusReason(String(result.data.Reason || ''));
@@ -382,8 +384,20 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       return;
     }
 
-    if (!editForm.name || !editForm.email || !editForm.position || !editForm.phone || !editForm.department || !editForm.status || !editInterview?.date || !editInterview?.time || !String(editInterview?.location || '').trim() || !editInterview?.panel) {
-      showAlert('Name, Email, Phone, Position, Education, Status, Date, Time, Location and Panel are required', 'warning');
+    const selectedStatus = Number(editForm.status);
+    const requiresInterviewFields = Boolean(
+      editInterview?.interviewId || [8, 9].includes(selectedStatus)
+    );
+
+    if (!editForm.name || !editForm.email || !editForm.position || !editForm.phone || !editForm.department || !editForm.status) {
+      showAlert('Name, Email, Phone, Position, Education and Status are required', 'warning');
+      return;
+    }
+    if (
+      requiresInterviewFields &&
+      (!editInterview?.date || !editInterview?.time || !String(editInterview?.location || '').trim() || !editInterview?.panel)
+    ) {
+      showAlert('Date, Time, Location and Panel are required for interview details', 'warning');
       return;
     }
     if (!String(editForm.skills || '').trim()) {
@@ -408,7 +422,6 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
       return;
     }
 
-    const selectedStatus = Number(editForm.status);
     if (editInterview?.date && editInterview?.time && isPastDateTime(editInterview.date, editInterview.time)) {
       showAlert('Back date/time is not allowed for interview scheduling', 'error');
       return;
@@ -508,6 +521,22 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleStartEditing = () => {
+    setEditForm({ ...initialEditForm });
+    setEditInterview({ ...initialEditInterview });
+    setEditResumeFile(null);
+    setResumeInputKey((k) => k + 1);
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setEditForm({ ...initialEditForm });
+    setEditInterview({ ...initialEditInterview });
+    setEditResumeFile(null);
+    setResumeInputKey((k) => k + 1);
+    setIsEditing(false);
   };
 
   const handleQuickStatusUpdate = async () => {
@@ -769,7 +798,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
               </div>
             </div>
             <div className={s.heroActions}>
-              {canEdit && !isEditing && tab === 'details' && <Btn onClick={() => setIsEditing(true)} variant="primary" small>Edit</Btn>}
+              {canEdit && !isEditing && tab === 'details' && <Btn onClick={handleStartEditing} variant="primary" small>Edit</Btn>}
               <Btn onClick={onClose} variant="ghost" small><Icons.X /></Btn>
             </div>
           </div>
@@ -797,6 +826,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                     <div className={s.fileField}>
                       <label className={s.fileLabel}>Resume (PDF/DOC/DOCX, max 5MB) *</label>
                       <input
+                        key={resumeInputKey}
                         className={s.fileInput}
                         type="file"
                         accept=".pdf,.doc,.docx"
@@ -828,7 +858,7 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                     </div>
                   )}
                   <div className={s.actions}>
-                    <Btn onClick={() => setIsEditing(false)} variant="ghost" disabled={updating}>Cancel</Btn>
+                    <Btn onClick={handleCancelEditing} variant="ghost" disabled={updating}>Cancel</Btn>
                     <Btn onClick={handleUpdateCandidate} variant="primary" disabled={updating}>{updating ? 'Updating...' : 'Update'}</Btn>
                   </div>
                 </div>
@@ -1046,12 +1076,10 @@ export default function CandidateModal({ candidate: c, onClose, activeRole, user
                   return [1, 2, 3].includes(statusId) && hasFeedback && notCurrentUser;
                 });
 
-                // Show L1 feedback if:
-                // 1. User is HR (roleId 1) OR Admin (roleId 4) OR
-                // 2. Panel is scheduled for L2 and there are L1 feedbacks from OTHER panels
-                const isHRorAdmin = [1, 4].includes(Number(user?.roleId || user?.Role_id));
+                // Show L1 feedback block only for L2 panel context.
+                // HR/Admin already see complete feedback history below.
                 const panelIsL2 = isPanelUser && interview && String(interview.Feedback_by) === currentUserId && Number(interview.Status_id) === 9;
-                const shouldShowL1Feedback = l1Feedbacks.length > 0 && (isHRorAdmin || panelIsL2);
+                const shouldShowL1Feedback = l1Feedbacks.length > 0 && panelIsL2;
 
                 if (!shouldShowL1Feedback) return null;
 
