@@ -201,6 +201,7 @@ function sendPanelAssignmentEmail(
     string $position,
     string $interviewDateTime,
     string $location,
+    string $roundLabel,
     int $durationMinutes = 60
 ): array {
     $errorMessage = null;
@@ -224,6 +225,10 @@ function sendPanelAssignmentEmail(
         $startDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $interviewDateTime, $tz) ?: new DateTime('now', $tz);
         $dateLabel = $startDateTime->format('d M Y');
         $timeLabel = $startDateTime->format('h:i A') . ' IST';
+        $endDateTime = clone $startDateTime;
+        $endDateTime->modify('+' . max(15, $durationMinutes) . ' minutes');
+        $dateRangeLabel = $startDateTime->format('l, F d Y, h:i A') . ' - ' . $endDateTime->format('h:i A') . ' IST';
+        $safeRoundLabel = trim($roundLabel) !== '' ? $roundLabel : 'L1 Round';
         $inviteUid = 'interview-' . $interviewId . '-' . $panelUserId . '@interviewportal.local';
         $icsContent = buildCalendarInvite(
             $inviteUid,
@@ -248,7 +253,7 @@ function sendPanelAssignmentEmail(
         $calendarUrl = $baseUrl . 'api/interview/invite.ics.php?token=' . urlencode($token);
 
         $mail->addAddress($panelEmail);
-        $mail->Subject = 'Interview Assignment - ' . $candidateName;
+        $mail->Subject = 'Invitation - ' . $safeRoundLabel . ' || ' . $candidateName . ' || ' . $position . ' || XTS World on ' . $dateRangeLabel;
         $mail->isHTML(true);
         $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
             . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
@@ -465,7 +470,8 @@ function sendCandidateInterviewEmail(
     string $position,
     string $interviewDateTime,
     string $location,
-    string $panelName
+    string $hrName,
+    string $roundLabel
 ): array {
     $errorMessage = null;
     $mail = buildMailer($errorMessage);
@@ -490,8 +496,14 @@ function sendCandidateInterviewEmail(
         $timeLabel = $startDateTime->format('h:i A') . ' IST';
 
         $mail->addAddress($candidateEmail);
-        $mail->Subject = 'Interview Scheduled - ' . $position;
+        $durationMinutes = 60;
+        $endDateTime = clone $startDateTime;
+        $endDateTime->modify('+' . max(15, $durationMinutes) . ' minutes');
+        $dateRangeLabel = $startDateTime->format('l, F d Y, h:i A') . ' - ' . $endDateTime->format('h:i A') . ' IST';
+        $mail->Subject = 'Invitation - ' . $safeRoundLabel . ' || ' . $candidateName . ' || ' . $position . ' || XTS World on ' . $dateRangeLabel;
         $mail->isHTML(true);
+        $safeHrName = trim($hrName) !== '' ? $hrName : 'HR Team';
+        $safeRoundLabel = trim($roundLabel) !== '' ? $roundLabel : 'L1 Round';
         $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
             . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
             . '<tr><td align="center">'
@@ -501,16 +513,20 @@ function sendCandidateInterviewEmail(
             . '<div style="font-size:22px;line-height:28px;font-weight:700;color:#ffffff;margin-top:8px;">Interview Scheduled</div>'
             . '</td></tr>'
             . '<tr><td style="padding:24px;">'
-            . '<p style="margin:0 0 14px 0;font-size:15px;line-height:22px;">Dear <strong>' . htmlspecialchars($candidateName) . '</strong>,</p>'
-            . '<p style="margin:0 0 16px 0;font-size:14px;line-height:22px;color:#374151;">Your interview has been scheduled. Please find the details below:</p>'
+            . '<p style="margin:0 0 14px 0;font-size:15px;line-height:22px;"><strong>' . htmlspecialchars($safeHrName) . '</strong> has invited you to participate in a meeting.</p>'
+            . '<div style="margin:0 0 16px 0;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;background:#f9fafb;">'
+            . '<div style="font-size:13px;line-height:20px;color:#475569;"><span style="color:#6b7280;">Round:</span> <strong style="color:#0f172a;">' . htmlspecialchars($safeRoundLabel) . '</strong></div>'
+            . '<div style="font-size:13px;line-height:20px;color:#475569;margin-top:6px;"><span style="color:#6b7280;">Name:</span> ' . htmlspecialchars($candidateName) . '</div>'
+            . '<div style="font-size:13px;line-height:20px;color:#475569;margin-top:2px;"><span style="color:#6b7280;">Position:</span> ' . htmlspecialchars($position) . '</div>'
+            . '</div>'
             . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;">'
             . '<tr><td style="padding:14px 16px;font-size:13px;line-height:24px;">'
-            . '<div><span style="color:#6b7280;">Position:</span> <strong>' . htmlspecialchars($position) . '</strong></div>'
             . '<div><span style="color:#6b7280;">Date:</span> ' . htmlspecialchars($dateLabel) . '</div>'
             . '<div><span style="color:#6b7280;">Time:</span> ' . htmlspecialchars($timeLabel) . '</div>'
-            . '<div><span style="color:#6b7280;">Location:</span> ' . htmlspecialchars($location) . '</div>'
             . '</td></tr>'
             . '</table>'
+            . '<p style="margin:18px 0 0 0;font-size:13px;line-height:20px;color:#374151;">Join meeting:</p>'
+            . '<p style="margin:6px 0 0 0;font-size:14px;line-height:22px;"><a href="' . htmlspecialchars($location, ENT_QUOTES, 'UTF-8') . '" style="color:#0f172a;">' . htmlspecialchars($location) . '</a></p>'
             . '<p style="margin:18px 0 0 0;font-size:13px;line-height:20px;color:#374151;">Please be on time and prepare accordingly. We wish you all the best!</p>'
             . '</td></tr>'
             . '<tr><td style="border-top:1px solid #e5e7eb;padding:14px 24px;font-size:12px;color:#6b7280;">Interview Hub</td></tr>'
@@ -518,16 +534,15 @@ function sendCandidateInterviewEmail(
             . '</td></tr></table>'
             . '</body></html>';
 
-        $mail->AltBody = "Dear {$candidateName},\n\n"
-            . "Your interview has been scheduled.\n\n"
-            . "Position: {$position}\n"
-            . "Interview Date: {$dateLabel}\n"
-            . "Interview Time: {$timeLabel}\n"
-            . "Location: {$location}\n\n"
+        $mail->AltBody = "{$safeHrName} has invited you to participate in a meeting.\n\n"
+            . "Round: {$safeRoundLabel}\n"
+            . "Name: {$candidateName}\n"
+            . "Position: {$position}\n\n"
+            . "{$dateRangeLabel}\n\n"
+            . "Join meeting:\n{$location}\n\n"
             . "Please be on time and prepare accordingly. We wish you all the best!\n\n"
-            . "Best regards,\nInterview Hub";
+            . "Interview Hub";
 
-        appendApplicationLink($mail);
         $mail->send();
         return ['success' => true, 'message' => 'Candidate email sent successfully'];
     } catch (Exception $e) {

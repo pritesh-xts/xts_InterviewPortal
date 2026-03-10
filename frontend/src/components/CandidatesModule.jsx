@@ -51,11 +51,15 @@ export default function CandidatesModule({ candidates, activeRole, onAddCandidat
 
   const handleScheduleSubmit = async (candidateId, scheduleData) => {
     try {
+      const hrName = user?.User_name || user?.name || user?.username || '';
+      const hrId = user?.User_id || user?.id || '';
       const response = await fetch(`${API_BASE}api/candidates/scheduleInterview.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           candidateId,
+          hrName,
+          hrId,
           ...scheduleData
         })
       });

@@ -45,10 +45,12 @@ try {
     // Determine interview status based on current candidate status
     $currentStatus = intval($candidate['Current_status'] ?? 0);
     $interviewStatus = 8; // Default: L1 Interview Confirmed
+    $roundLabel = 'L1 Round';
     
     if ($currentStatus === 1) {
         // Candidate has L1 Clear, so this is L2 scheduling
         $interviewStatus = 9; // L2 Interview Confirmed
+        $roundLabel = 'L2 Round';
     }
     
     // Insert interview record
@@ -80,10 +82,43 @@ try {
         $candidate['Candidate_name'],
         $candidate['Candidate_position'],
         $interviewDateTime,
-        $data->location
+        $data->location,
+        $roundLabel
     );
-    
-    // Candidate email notifications are intentionally disabled.
+
+    $hrName = '';
+    if (isset($data->hrName)) {
+        $hrName = trim((string)$data->hrName);
+    }
+    if (isset($data->hrId)) {
+        $hrId = is_numeric($data->hrId) ? intval($data->hrId) : 0;
+        if ($hrId > 0) {
+            $hrQuery = "SELECT User_name FROM mst_users WHERE User_id = :hrId LIMIT 1";
+            $hrStmt = $db->prepare($hrQuery);
+            $hrStmt->bindValue(":hrId", $hrId, PDO::PARAM_INT);
+            $hrStmt->execute();
+            if ($hrStmt->rowCount() > 0) {
+                $hrRow = $hrStmt->fetch(PDO::FETCH_ASSOC);
+                $hrName = trim((string)($hrRow['User_name'] ?? ''));
+            }
+        }
+    }
+    if ($hrName === '' && defined('SMTP_FROM_NAME')) {
+        $hrName = (string)SMTP_FROM_NAME;
+    }
+    if ($hrName === '') {
+        $hrName = 'HR Team';
+    }
+
+    $candidateEmailResult = sendCandidateInterviewEmail(
+        $candidate['Candidate_email'],
+        $candidate['Candidate_name'],
+        $candidate['Candidate_position'],
+        $interviewDateTime,
+        $data->location,
+        $hrName,
+        $roundLabel
+    );
     
     echo json_encode([
         "success" => true,
@@ -91,7 +126,7 @@ try {
         "data" => [
             "interviewId" => $interviewId,
             "panelEmailSent" => $emailResult['success'],
-            "candidateEmailSent" => false
+            "candidateEmailSent" => $candidateEmailResult['success']
         ]
     ]);
 } catch(PDOException $e) {
