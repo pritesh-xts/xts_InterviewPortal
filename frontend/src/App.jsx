@@ -12,47 +12,58 @@ import { createCandidate, uploadCandidateResume } from './api/InterviewPortalApi
 function App() {
 
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = sessionStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const [page, setPage] = useState(() => {
     return sessionStorage.getItem('activePage') || 'candidates';
   });
   const [activeRole, setActiveRole] = useState(() => {
-    return sessionStorage.getItem('activeRole') || 'hr';
+    const savedRole = sessionStorage.getItem('activeRole');
+    if (savedRole) return savedRole;
+
+    try {
+      const savedUser = sessionStorage.getItem('user');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        const roleId = Number(userData?.roleId || userData?.Role_id);
+        if (roleId === 2) return 'panel';
+      }
+    } catch {
+      // ignore parse errors and fallback to hr
+    }
+    return 'hr';
   });
-  
+
   useEffect(() => {
     sessionStorage.setItem('activePage', page);
   }, [page]);
-  
+
   useEffect(() => {
     sessionStorage.setItem('activeRole', activeRole);
   }, [activeRole]);
   const [candidates, setCandidates] = useState([]);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [resetToken, setResetToken] = useState(null);
+  const [resetToken, setResetToken] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('reset');
+  });
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    // Check for reset token in URL
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('reset');
-    if (token) {
-      setResetToken(token);
-      return;
-    }
+    if (!user) return;
+    const savedRole = sessionStorage.getItem('activeRole');
+    if (savedRole) return;
 
-    const savedUser = sessionStorage.getItem('user');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-      const savedRole = sessionStorage.getItem('activeRole');
-      if (!savedRole) {
-        if (userData.roleId == 1) setActiveRole('hr');
-        else if (userData.roleId == 2) setActiveRole('panel');
-        else if (userData.roleId == 4) setActiveRole('hr');
-      }
-    }
-  }, []);
+    const roleId = Number(user?.roleId || user?.Role_id);
+    if (roleId === 2) setActiveRole('panel');
+    else setActiveRole('hr');
+  }, [user]);
 
   const fetchCandidates = useCallback(async () => {
     if (!user) return;
@@ -151,7 +162,7 @@ function App() {
       <main className={s.main}>
         {page == 'candidates' && <CandidatesModule candidates={candidates} activeRole={activeRole} onAddCandidate={handleAdd} user={user} onRefresh={fetchCandidates} />}
         {page == 'reports' && <ReportsModule candidates={candidates} />}
-        {page == 'users' && user.roleId === 4 && <UserManagement />}
+        {page == 'users' && user.roleId == 4 && <UserManagement />}
       </main>
       {showChangePassword && (
         <ChangePasswordModal

@@ -24,13 +24,14 @@ if ($type == "current") {
             c.Candidate_experience,
             c.Candidate_skills,
             s.Status_description,
+            c.Reason,
 
             MAX(CASE 
-                WHEN t.Feedback_by = 5 THEN t.Feedback 
+                WHEN t.Status_id IN (1, 2, 3, 8) THEN t.Feedback 
             END) AS L1_feedback,
 
             MAX(CASE 
-                WHEN t.Feedback_by = 2 THEN t.Feedback 
+                WHEN t.Status_id IN (4, 5, 6, 9) THEN t.Feedback 
             END) AS L2_feedback
 
         FROM mst_candidates c
@@ -53,7 +54,8 @@ if ($type == "current") {
             c.Candidate_department,
             c.Candidate_experience,
             c.Candidate_skills,
-            s.Status_description
+            s.Status_description,
+            c.Reason
     ";
 
     $stmt = $conn->prepare($query);
@@ -81,13 +83,14 @@ else if ($type == "custom") {
             c.Candidate_experience,
             c.Candidate_skills,
             s.Status_description,
+            c.Reason,
 
             MAX(CASE 
-                WHEN t.Feedback_by = 5 THEN t.Feedback 
+                WHEN t.Status_id IN (1, 2, 3, 8) THEN t.Feedback 
             END) AS L1_feedback,
 
             MAX(CASE 
-                WHEN t.Feedback_by = 2 THEN t.Feedback 
+                WHEN t.Status_id IN (4, 5, 6, 9) THEN t.Feedback 
             END) AS L2_feedback
 
         FROM mst_candidates c
@@ -111,7 +114,8 @@ else if ($type == "custom") {
             c.Candidate_department,
             c.Candidate_experience,
             c.Candidate_skills,
-            s.Status_description
+            s.Status_description,
+            c.Reason
     ";
 
     $stmt = $conn->prepare($query);
@@ -145,7 +149,8 @@ $columns = [
     "Skills",
     "Status",
     "L1 Feedback",
-    "L2 Feedback"
+    "L2 Feedback",
+    "Reason"
 ];
 
 echo implode("\t", $columns) . "\n";
@@ -163,7 +168,8 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $row['Candidate_skills'],
         $row['Status_description'] ?? 'Unknown',
         $row['L1_feedback'] ?? '-',
-        $row['L2_feedback'] ?? '-'
+        $row['L2_feedback'] ?? '-',
+        $row['Reason'] ?? '-'
     ];
 
     echo implode("\t", $data) . "\n";

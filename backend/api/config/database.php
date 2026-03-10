@@ -20,6 +20,7 @@ class Database
     private $password = "";
     public $conn;
 
+
     public function getConnection()
     {
         $this->conn = null;
@@ -30,7 +31,10 @@ class Database
             $this->conn->exec("SET time_zone = '+05:30'");
         } catch (PDOException $e)
         {
-            echo json_encode(["success" => false, "message" => "Connection error: " . $e->getMessage()]);
+            error_log("Database connection error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "Database connection failed. Please check your database configuration."]);
+            exit();
         }
         return $this->conn;
     }

@@ -5,7 +5,7 @@ import logo from '../assets/logo.png';
 
 export default function Sidebar({ page, setPage, activeRole, setActiveRole, candidates, user, onLogout, onChangePassword }) {
   const isGlobalAdmin = user?.roleId === 4;
-  
+
   const navItems = [
     { id: 'candidates', label: 'Candidates', icon: <Icons.Users /> },
     { id: 'reports', label: 'Reports', icon: <Icons.BarChart /> },
@@ -26,7 +26,7 @@ export default function Sidebar({ page, setPage, activeRole, setActiveRole, cand
         <p className={s.userName}>{user?.name}</p>
       </div>
 
-      {setActiveRole && (
+      {/* {setActiveRole && (
         <div className={s.roleSwitch}>
           {['hr', 'panel'].map(r => (
             <button
@@ -38,7 +38,7 @@ export default function Sidebar({ page, setPage, activeRole, setActiveRole, cand
             </button>
           ))}
         </div>
-      )}
+      )} */}
 
       <div className={s.navItems}>
         {navItems.map(({ id, label, icon }) => (

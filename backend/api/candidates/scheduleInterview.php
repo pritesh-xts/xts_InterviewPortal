@@ -83,26 +83,7 @@ try {
         $data->location
     );
     
-    // Send email to candidate
-    $candidateEmailResult = sendCandidateInterviewEmail(
-        $candidate['Candidate_email'],
-        $candidate['Candidate_name'],
-        $candidate['Candidate_position'],
-        $interviewDateTime,
-        $data->location,
-        $panel['User_name']
-    );
-    
-    // If this was L2 scheduling (status changed from 1 to 9)
-    // Send L1 Clear congratulations email before L2 interview details
-    if ($currentStatus === 1) {
-        // Send L1 Clear email
-        $l1ClearEmail = sendCandidateL1ClearEmail(
-            $candidate['Candidate_email'],
-            $candidate['Candidate_name'],
-            $candidate['Candidate_position']
-        );
-    }
+    // Candidate email notifications are intentionally disabled.
     
     echo json_encode([
         "success" => true,
@@ -110,7 +91,7 @@ try {
         "data" => [
             "interviewId" => $interviewId,
             "panelEmailSent" => $emailResult['success'],
-            "candidateEmailSent" => $candidateEmailResult['success']
+            "candidateEmailSent" => false
         ]
     ]);
 } catch(PDOException $e) {
