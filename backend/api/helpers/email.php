@@ -47,6 +47,30 @@ function appBaseUrl(): string
     return $scheme . '://' . $host . $rootPath;
 }
 
+function applicationPortalUrl(): string
+{
+    if (defined('FRONTEND_URL') && trim((string)FRONTEND_URL) !== '') {
+        return rtrim((string)FRONTEND_URL, '/');
+    }
+    return rtrim(appBaseUrl(), '/');
+}
+
+function appendApplicationLink(PHPMailer $mail): void
+{
+    $appUrl = applicationPortalUrl();
+    $isHtml = stripos((string)$mail->ContentType, 'text/html') !== false;
+
+    if ($isHtml) {
+        $mail->Body .= '<p style="margin:16px 0 0 0;font-size:12px;line-height:19px;color:#6b7280;">'
+            . 'Application Link: <a href="' . htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8') . '" '
+            . 'style="color:#0f172a;">' . htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8') . '</a></p>';
+    } else {
+        $mail->Body = rtrim((string)$mail->Body) . "\n\nApplication Link: {$appUrl}\n";
+    }
+
+    $mail->AltBody = rtrim((string)$mail->AltBody) . "\n\nApplication Link: {$appUrl}\n";
+}
+
 function buildInviteToken(array $payload): string
 {
     $payloadJson = json_encode($payload, JSON_UNESCAPED_SLASHES);
@@ -218,6 +242,7 @@ function sendPanelAssignmentEmail(
         ];
         $token = buildInviteToken($tokenPayload);
         $baseUrl = appBaseUrl();
+        $appUrl = applicationPortalUrl();
         $acceptUrl = $baseUrl . 'api/interview/respond.php?action=accept&token=' . urlencode($token);
         $rejectUrl = $baseUrl . 'api/interview/respond.php?action=reject&token=' . urlencode($token);
         $calendarUrl = $baseUrl . 'api/interview/invite.ics.php?token=' . urlencode($token);
@@ -266,6 +291,9 @@ function sendPanelAssignmentEmail(
             // . 'onmouseout="this.style.background=\'#ffffff\';this.style.color=\'#059669\';this.style.borderColor=\'#059669\';">Add to Calendar (.ics)</a>'
             // . '</td>'
             . '</tr></table>'
+            . '<p style="margin:12px 0 0 0;font-size:13px;line-height:20px;color:#374151;">Application Link: '
+            . '<a href="' . htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8') . '" style="color:#0f172a;">'
+            . htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8') . '</a></p>'
             // . '<p style="margin:18px 0 0 0;font-size:12px;line-height:19px;color:#6b7280;">If buttons do not work, copy these links into your browser:<br>'
             // . 'Accept: ' . htmlspecialchars($acceptUrl) . '<br>'
             // . 'Reject: ' . htmlspecialchars($rejectUrl) . '<br>'
@@ -285,6 +313,7 @@ function sendPanelAssignmentEmail(
             . "Location: " . $location . "\n\n"
             . "Accept Invite: " . $acceptUrl . "\n"
             . "Reject Invite: " . $rejectUrl . "\n"
+            . "Application Link: " . $appUrl . "\n"
             . "Calendar Invite (.ics): " . $calendarUrl . "\n\n"
             . "Please login to the Interview Hub to review the candidate details.\n\n"
             . "Best regards,\nInterview Hub";
@@ -367,6 +396,7 @@ function sendHrInviteResponseEmail(
             . "Invite Response: {$normalizedResponse}\n\n"
             . "Interview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return ['success' => true, 'message' => 'HR notification sent'];
     } catch (Exception $e) {
@@ -421,6 +451,7 @@ function sendUserCredentialsEmail(string $email, string $name, string $password)
             . "Please change your password after first login.\n\n"
             . "Best regards,\nInterview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return true;
     } catch (Exception $e) {
@@ -496,6 +527,7 @@ function sendCandidateInterviewEmail(
             . "Please be on time and prepare accordingly. We wish you all the best!\n\n"
             . "Best regards,\nInterview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return ['success' => true, 'message' => 'Candidate email sent successfully'];
     } catch (Exception $e) {
@@ -552,6 +584,7 @@ function sendPasswordResetEmail(string $email, string $name, string $token): boo
             . "If you did not request a password reset, please ignore this email.\n\n"
             . "Best regards,\nInterview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return true;
     } catch (Exception $e) {
@@ -615,6 +648,7 @@ function sendCandidateL1ClearEmail(
             . "Please prepare for the next round. Best of luck!\n\n"
             . "Best regards,\nInterview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return ['success' => true, 'message' => 'L1 clear notification sent to candidate'];
     } catch (Exception $e) {
@@ -672,6 +706,7 @@ function sendCandidateL1RejectEmail(
             . "We appreciate your interest in our organization and wish you all the best in your future endeavors.\n\n"
             . "Best regards,\nInterview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return ['success' => true, 'message' => 'Interview update sent to candidate'];
     } catch (Exception $e) {
@@ -734,6 +769,7 @@ function sendCandidateL2ClearEmail(
             . "We are impressed with your performance and look forward to having you on our team!\n\n"
             . "Best regards,\nInterview Hub";
 
+        appendApplicationLink($mail);
         $mail->send();
         return ['success' => true, 'message' => 'L2 clear notification sent to candidate'];
     } catch (Exception $e) {

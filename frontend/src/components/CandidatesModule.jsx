@@ -160,7 +160,7 @@ const handleStatusChange = async (candidateId, statusId) => {
           candidate={scheduleCandidate}
         />
       )}
-      {selected && <CandidateModal candidate={selected} onClose={() => { setSelected(null); onRefresh && onRefresh(); }} activeRole={activeRole} user={user} />}
+      {selected && <CandidateModal candidate={selected} onClose={() => { setSelected(null); onRefresh && onRefresh(); }} activeRole={activeRole} user={user} onRefresh={onRefresh} />}
     </div>
     </>
   );
