@@ -12,10 +12,19 @@ export default function Sidebar({ page, setPage, activeRole, setActiveRole, cand
     ...(isGlobalAdmin ? [{ id: 'users', label: 'User Management', icon: <Icons.Users /> }] : [])
   ];
 
-  const statuses = candidates.map(c => String(c.Status_description || c.status || '').toLowerCase());
-  const pendingCount = statuses.filter(v => v.includes('pending')).length;
-  const doneCount = statuses.filter(v => v.includes('clear') || v.includes('reject')).length;
-  const activeCount = Math.max(candidates.length - doneCount, 0);
+  const pendingCount = candidates.filter(c => String(c.Status_description || '').toLowerCase().includes('pending')).length;
+  const activeCount = candidates.filter(c => {
+    const status = String(c.Status_description || '').toLowerCase();
+    return !status.includes('pending') && 
+           !status.includes('offer hold on') && 
+           !status.includes('offer rolled out') && 
+           !status.includes('l1 rejected') && 
+           !status.includes('l2 rejected');
+  }).length;
+  const doneCount = candidates.filter(c => {
+    const status = String(c.Status_description || '').toLowerCase();
+    return status.includes('offer rolled out') || status.includes('offer hold on');
+  }).length;
 
   return (
     <nav className={s.nav}>
@@ -51,7 +60,7 @@ export default function Sidebar({ page, setPage, activeRole, setActiveRole, cand
       <div className={s.footer}>
         <div className={s.pipeline}>
           <p className={s.pipelineTitle}>Pipeline</p>
-          {[['Pending', pendingCount, C.amber], ['Active', activeCount, C.blue], ['Done', doneCount, C.green]].map(([label, value, color]) => (
+          {[['Pending', pendingCount, C.amber], ['Active', activeCount, C.blue], ['Completed', doneCount, C.green]].map(([label, value, color]) => (
             <div key={label} className={s.statRow}>
               <span className={s.statLabel}>{label}</span>
               <span className={s.statValue} style={{ color }}>{value}</span>

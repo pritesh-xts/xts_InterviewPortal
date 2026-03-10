@@ -105,15 +105,10 @@ export default function ReportsModule({ candidates }) {
         .includes("interview confirmed")
     );
 
-    const completedCandidates = candidates.filter(
-      (c) =>
-        !String(c.Status_description || "")
-          .toLowerCase()
-          .includes("pending") &&
-        !String(c.Status_description || "")
-          .toLowerCase()
-          .includes("interview confirmed")
-    );
+    const completedCandidates = candidates.filter((c) => {
+      const status = String(c.Status_description || "").toLowerCase();
+      return status.includes("offer rolled out") || status.includes("offer hold on");
+    });
 
 
     return {
@@ -153,6 +148,18 @@ export default function ReportsModule({ candidates }) {
       return matchesSearch && matchesStatus && matchesPosition;
     });
   };
+
+  /* -------------------- FILTERED STATISTICS -------------------- */
+  const filteredStats = useMemo(() => {
+    const filtered = applyFilters(candidates);
+    const pending = filtered.filter(c => String(c.Status_description || "").toLowerCase().includes("pending")).length;
+    const confirmed = filtered.filter(c => String(c.Status_description || "").toLowerCase().includes("interview confirmed")).length;
+    const completed = filtered.filter(c => {
+      const status = String(c.Status_description || "").toLowerCase();
+      return status.includes("offer rolled out") || status.includes("offer hold on");
+    }).length;
+    return { total: filtered.length, pending, confirmed, completed };
+  }, [candidates, search, statusFilter, positionFilter]);
 
   const downloadCurrentMonth = () => {
     window.open(
@@ -541,10 +548,10 @@ export default function ReportsModule({ candidates }) {
 
         {/* Stat Cards */}
         <div className="row">
-          <StatCard label="Total Candidates" value={stats.total} type="total" />
-          <StatCard label="Pending" value={stats.pending} type="pending" />
-          <StatCard label="Interview Confirmed" value={stats.confirmed} type="confirmed" />
-          <StatCard label="Completed" value={stats.completed} type="completed" />
+          <StatCard label="Total Candidates" value={filteredStats.total} type="total" />
+          <StatCard label="Pending" value={filteredStats.pending} type="pending" />
+          <StatCard label="Interview Confirmed" value={filteredStats.confirmed} type="confirmed" />
+          <StatCard label="Completed" value={filteredStats.completed} type="completed" />
         </div>
 
         {/* Search & Filters */}
