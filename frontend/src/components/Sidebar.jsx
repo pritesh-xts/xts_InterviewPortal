@@ -16,14 +16,14 @@ export default function Sidebar({ page, setPage, activeRole, setActiveRole, cand
   const activeCount = candidates.filter(c => {
     const status = String(c.Status_description || '').toLowerCase();
     return !status.includes('pending') && 
-           !status.includes('offer hold on') && 
+           !status.includes('offer on hold') && 
            !status.includes('offer rolled out') && 
            !status.includes('l1 rejected') && 
            !status.includes('l2 rejected');
   }).length;
   const doneCount = candidates.filter(c => {
     const status = String(c.Status_description || '').toLowerCase();
-    return status.includes('offer rolled out') || status.includes('offer hold on');
+    return status.includes('offer rolled out') || status.includes('offer on hold');
   }).length;
 
   return (

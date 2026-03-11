@@ -89,6 +89,37 @@ export default function ReportsModule({ candidates }) {
     return unique.filter(Boolean);
   }, [candidates]);
 
+  /* -------------------- FILTERED STATUS OPTIONS BASED ON ACTIVE TAB -------------------- */
+  const filteredStatusOptions = useMemo(() => {
+    if (activeTab === 'pending') {
+      return candidates
+        .filter(c => String(c.Status_description || '').toLowerCase().includes('pending'))
+        .map(c => c.Status_description)
+        .filter((v, i, a) => v && a.indexOf(v) === i);
+    }
+    if (activeTab === 'confirmed') {
+      return candidates
+        .filter(c => String(c.Status_description || '').toLowerCase().includes('interview confirmed'))
+        .map(c => c.Status_description)
+        .filter((v, i, a) => v && a.indexOf(v) === i);
+    }
+    if (activeTab === 'completed') {
+      return candidates
+        .filter(c => {
+          const status = String(c.Status_description || '').toLowerCase();
+          return status.includes('offer rolled out') || status.includes('offer on hold');
+        })
+        .map(c => c.Status_description)
+        .filter((v, i, a) => v && a.indexOf(v) === i);
+    }
+    return [...new Set(candidates.map(c => c.Status_description))].filter(Boolean);
+  }, [candidates, activeTab]);
+
+  /* -------------------- RESET STATUS FILTER ON TAB CHANGE -------------------- */
+  useEffect(() => {
+    setStatusFilter('all');
+  }, [activeTab]);
+
   /* -------------------- STATISTICS -------------------- */
   const stats = useMemo(() => {
     const total = candidates.length;
@@ -107,7 +138,7 @@ export default function ReportsModule({ candidates }) {
 
     const completedCandidates = candidates.filter((c) => {
       const status = String(c.Status_description || "").toLowerCase();
-      return status.includes("offer rolled out") || status.includes("offer hold on");
+      return status.includes("offer rolled out") || status.includes("offer on hold");
     });
 
 
@@ -156,7 +187,7 @@ export default function ReportsModule({ candidates }) {
     const confirmed = filtered.filter(c => String(c.Status_description || "").toLowerCase().includes("interview confirmed")).length;
     const completed = filtered.filter(c => {
       const status = String(c.Status_description || "").toLowerCase();
-      return status.includes("offer rolled out") || status.includes("offer hold on");
+      return status.includes("offer rolled out") || status.includes("offer on hold");
     }).length;
     return { total: filtered.length, pending, confirmed, completed };
   }, [candidates, search, statusFilter, positionFilter]);
@@ -573,13 +604,11 @@ export default function ReportsModule({ candidates }) {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All Status</option>
-              {[...new Set(candidates.map(c => c.Status_description))]
-                .filter(Boolean)
-                .map((status, i) => (
-                  <option key={i} value={status}>
-                    {status}
-                  </option>
-                ))}
+              {filteredStatusOptions.map((status, i) => (
+                <option key={i} value={status}>
+                  {status}
+                </option>
+              ))}
             </select>
           </div>
 
