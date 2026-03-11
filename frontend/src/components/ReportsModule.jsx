@@ -107,7 +107,7 @@ export default function ReportsModule({ candidates }) {
 
     const completedCandidates = candidates.filter((c) => {
       const status = String(c.Status_description || "").toLowerCase();
-      return status.includes("offer rolled out") || status.includes("offer hold on");
+      return status.includes("offer rolled out") || status.includes("offer on hold");
     });
 
 
@@ -156,7 +156,7 @@ export default function ReportsModule({ candidates }) {
     const confirmed = filtered.filter(c => String(c.Status_description || "").toLowerCase().includes("interview confirmed")).length;
     const completed = filtered.filter(c => {
       const status = String(c.Status_description || "").toLowerCase();
-      return status.includes("offer rolled out") || status.includes("offer hold on");
+      return status.includes("offer rolled out") || status.includes("offer on hold");
     }).length;
     return { total: filtered.length, pending, confirmed, completed };
   }, [candidates, search, statusFilter, positionFilter]);

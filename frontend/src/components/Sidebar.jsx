@@ -5,7 +5,7 @@ import logo from '../assets/logo.png';
 
 export default function Sidebar({ page, setPage, activeRole, setActiveRole, candidates, user, onLogout, onChangePassword }) {
   const isGlobalAdmin = user?.roleId === 4;
-  
+
   const navItems = [
     { id: 'candidates', label: 'Candidates', icon: <Icons.Users /> },
     { id: 'reports', label: 'Reports', icon: <Icons.BarChart /> },
@@ -15,15 +15,15 @@ export default function Sidebar({ page, setPage, activeRole, setActiveRole, cand
   const pendingCount = candidates.filter(c => String(c.Status_description || '').toLowerCase().includes('pending')).length;
   const activeCount = candidates.filter(c => {
     const status = String(c.Status_description || '').toLowerCase();
-    return !status.includes('pending') && 
-           !status.includes('offer hold on') && 
-           !status.includes('offer rolled out') && 
-           !status.includes('l1 rejected') && 
-           !status.includes('l2 rejected');
+    return !status.includes('pending') &&
+      !status.includes('offer on hold') &&
+      !status.includes('offer rolled out') &&
+      !status.includes('l1 rejected') &&
+      !status.includes('l2 rejected');
   }).length;
   const doneCount = candidates.filter(c => {
     const status = String(c.Status_description || '').toLowerCase();
-    return status.includes('offer rolled out') || status.includes('offer hold on');
+    return status.includes('offer rolled out') || status.includes('offer on hold');
   }).length;
 
   return (

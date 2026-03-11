@@ -11,7 +11,7 @@ define('SMTP_PORT', 587);
 define('SMTP_USERNAME', 'rjadhav@xtsworld.in'); // Change this
 define('SMTP_PASSWORD', 'h04ujEHDCRdJ'); // Change this (use App Password for Gmail)
 define('SMTP_FROM_EMAIL', 'rjadhav@xtsworld.in'); // Change this
-define('SMTP_FROM_NAME', 'Interview Hub');
+define('SMTP_FROM_NAME', 'XTS World');
  
 // HR Email
 define('HR_EMAIL', 'rjadhav@xtsworld.in'); // Change this to HR email address
