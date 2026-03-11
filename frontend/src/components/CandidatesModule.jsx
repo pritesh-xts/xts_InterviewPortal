@@ -20,6 +20,8 @@ export default function CandidatesModule({ candidates, activeRole, onAddCandidat
   const [scheduleCandidate, setScheduleCandidate] = useState(null);
   const [selected, setSelected] = useState(null);
   const [statuses, setStatuses] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     const load = async () => {
@@ -33,6 +35,10 @@ export default function CandidatesModule({ candidates, activeRole, onAddCandidat
     load();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterStatus, candidates]);
+
   const filtered = candidates.filter(c => {
     const name = c.Candidate_name || c.name || '';
     const position = c.Candidate_position || c.position || '';
@@ -41,6 +47,11 @@ export default function CandidatesModule({ candidates, activeRole, onAddCandidat
     const matchFilter = filterStatus === 'all' || statusId == filterStatus;
     return matchSearch && matchFilter;
   });
+
+  const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pagedCandidates = filtered.slice(startIndex, startIndex + pageSize);
 
   const canAddCandidate = user && (user.roleId == 1 || user.roleId == 4);
   
@@ -149,7 +160,46 @@ const handleStatusChange = async (candidateId, statusId) => {
         </div>
       ) : (
         <div className={s.list}>
-          {filtered.map(c => <CandidateRow key={c.Candidate_id || c.id} candidate={c} user={user} onClick={() => setSelected(c)} onStatusChange={handleStatusChange} onSchedule={handleSchedule} />)}
+          {pagedCandidates.map(c => <CandidateRow key={c.Candidate_id || c.id} candidate={c} user={user} onClick={() => setSelected(c)} onStatusChange={handleStatusChange} onSchedule={handleSchedule} />)}
+        </div>
+      )}
+
+      {filtered.length > pageSize && (
+        <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+          <button className="btn btn-outline-secondary btn-sm" disabled={safePage === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+            Prev
+          </button>
+          <div className="d-flex align-items-center gap-1">
+            {(() => {
+              const maxVisible = 4;
+              const pages = [];
+              const startPage = Math.max(1, safePage - Math.floor((maxVisible - 1) / 2));
+              const endPage = Math.min(totalPages, startPage + maxVisible - 1);
+              const safeStart = Math.max(1, endPage - maxVisible + 1);
+              if (safeStart > 1) pages.push(1);
+              if (safeStart > 2) pages.push('ellipsis-start');
+              for (let p = safeStart; p <= endPage; p++) pages.push(p);
+              if (endPage < totalPages - 1) pages.push('ellipsis-end');
+              if (endPage < totalPages) pages.push(totalPages);
+              return pages.map((p, idx) => {
+                if (typeof p === 'string') {
+                  return <span key={`${p}-${idx}`} className="px-2 text-muted">…</span>;
+                }
+                return (
+                  <button
+                    key={p}
+                    className={`btn btn-sm ${p === safePage ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => setPage(p)}
+                  >
+                    {p}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+          <button className="btn btn-outline-secondary btn-sm" disabled={safePage === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
+            Next
+          </button>
         </div>
       )}
 

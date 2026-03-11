@@ -82,6 +82,12 @@ export default function ReportsModule({ candidates }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, search, statusFilter, positionFilter, candidates]);
 
   /* -------------------- UNIQUE POSITIONS -------------------- */
   const positions = useMemo(() => {
@@ -147,6 +153,59 @@ export default function ReportsModule({ candidates }) {
 
       return matchesSearch && matchesStatus && matchesPosition;
     });
+  };
+
+  const paginate = (data) => {
+    const totalPages = Math.max(Math.ceil(data.length / pageSize), 1);
+    const safePage = Math.min(Math.max(page, 1), totalPages);
+    const start = (safePage - 1) * pageSize;
+    return {
+      page: safePage,
+      totalPages,
+      items: data.slice(start, start + pageSize)
+    };
+  };
+
+  const renderPagination = (totalPages) => {
+    if (totalPages <= 1) return null;
+    const maxVisible = 4;
+    const pages = [];
+    const startPage = Math.max(1, page - Math.floor((maxVisible - 1) / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    const safeStart = Math.max(1, endPage - maxVisible + 1);
+
+    if (safeStart > 1) pages.push(1);
+    if (safeStart > 2) pages.push('ellipsis-start');
+    for (let p = safeStart; p <= endPage; p++) pages.push(p);
+    if (endPage < totalPages - 1) pages.push('ellipsis-end');
+    if (endPage < totalPages) pages.push(totalPages);
+
+    return (
+      <div className="d-flex justify-content-center align-items-center gap-2 mt-3">
+        <button className="btn btn-outline-secondary btn-sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+          Prev
+        </button>
+        <div className="d-flex align-items-center gap-1">
+          {pages.map((p, idx) => {
+            if (typeof p === 'string') {
+              return <span key={`${p}-${idx}`} className="px-2 text-muted">…</span>;
+            }
+            return (
+              <button
+                key={p}
+                className={`btn btn-sm ${p === page ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
+        <button className="btn btn-outline-secondary btn-sm" disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
+          Next
+        </button>
+      </div>
+    );
   };
 
   /* -------------------- FILTERED STATISTICS -------------------- */
@@ -607,17 +666,25 @@ export default function ReportsModule({ candidates }) {
 
         {/* Content Section */}
         <div className="mt-4">
-          {activeTab === "total" &&
-            renderTable(applyFilters(candidates))}
+          {activeTab === "total" && (() => {
+            const paged = paginate(applyFilters(candidates));
+            return (<>{renderTable(paged.items)}{renderPagination(paged.totalPages)}</>);
+          })()}
 
-          {activeTab === "pending" &&
-            renderTable(applyFilters(stats.pendingCandidates))}
+          {activeTab === "pending" && (() => {
+            const paged = paginate(applyFilters(stats.pendingCandidates));
+            return (<>{renderTable(paged.items)}{renderPagination(paged.totalPages)}</>);
+          })()}
 
-          {activeTab === "confirmed" &&
-            renderTable(applyFilters(stats.confirmedCandidates))}
+          {activeTab === "confirmed" && (() => {
+            const paged = paginate(applyFilters(stats.confirmedCandidates));
+            return (<>{renderTable(paged.items)}{renderPagination(paged.totalPages)}</>);
+          })()}
 
-          {activeTab === "completed" &&
-            renderTable(applyFilters(stats.completedCandidates))}
+          {activeTab === "completed" && (() => {
+            const paged = paginate(applyFilters(stats.completedCandidates));
+            return (<>{renderTable(paged.items)}{renderPagination(paged.totalPages)}</>);
+          })()}
         </div>
       </div>
     </>
