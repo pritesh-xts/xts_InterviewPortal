@@ -50,6 +50,7 @@ try {
         $dateTime = $data->date . ' ' . $data->time . ':00';
         $allowedScheduleStatuses = [8, 9];
         $interviewStatus = in_array($status, $allowedScheduleStatuses, true) ? $status : 8;
+        $roundLabel = $interviewStatus === 9 ? 'L2 Round' : 'L1 Round';
         $location = $data->location ?? '';
         
         $interviewQuery = "INSERT INTO tbl_interview_details 
@@ -76,6 +77,7 @@ try {
         if ($panelEmail !== '') {
             $candidateName = trim((string)$data->name);
             $candidatePosition = trim((string)$data->position);
+            $hrName = defined('SMTP_FROM_NAME') ? (string)SMTP_FROM_NAME : 'HR Team';
             $emailNotification = sendPanelAssignmentEmail(
                 $interviewId,
                 intval($data->panel),
@@ -84,7 +86,9 @@ try {
                 $candidateName,
                 $candidatePosition,
                 $dateTime,
-                $location
+                $location,
+                $roundLabel,
+                $hrName
             );
             
             // Send email to candidate
@@ -96,7 +100,8 @@ try {
                     $candidatePosition,
                     $dateTime,
                     $location,
-                    $panelName
+                    $hrName,
+                    $roundLabel
                 );
                 if (!$candidateEmailResult['success']) {
                     error_log('Candidate email failed: ' . $candidateEmailResult['message']);

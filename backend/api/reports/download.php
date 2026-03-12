@@ -144,7 +144,7 @@ $columns = [
     "Phone",
     "Email",
     "Position",
-    "Department",
+    "Education",
     "Experience",
     "Skills",
     "Status",

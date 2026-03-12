@@ -73,19 +73,6 @@ try {
     $updateStmt->bindParam(":candidateId", $data->candidateId);
     $updateStmt->execute();
     
-    // Send email to panel
-    $emailResult = sendPanelAssignmentEmail(
-        $interviewId,
-        $data->panel,
-        $panel['User_name'],
-        $panel['User_email'],
-        $candidate['Candidate_name'],
-        $candidate['Candidate_position'],
-        $interviewDateTime,
-        $data->location,
-        $roundLabel
-    );
-
     $hrName = '';
     if (isset($data->hrName)) {
         $hrName = trim((string)$data->hrName);
@@ -109,6 +96,20 @@ try {
     if ($hrName === '') {
         $hrName = 'HR Team';
     }
+
+    // Send email to panel
+    $emailResult = sendPanelAssignmentEmail(
+        $interviewId,
+        $data->panel,
+        $panel['User_name'],
+        $panel['User_email'],
+        $candidate['Candidate_name'],
+        $candidate['Candidate_position'],
+        $interviewDateTime,
+        $data->location,
+        $roundLabel,
+        $hrName
+    );
 
     $candidateEmailResult = sendCandidateInterviewEmail(
         $candidate['Candidate_email'],

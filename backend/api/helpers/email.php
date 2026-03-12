@@ -202,6 +202,7 @@ function sendPanelAssignmentEmail(
     string $interviewDateTime,
     string $location,
     string $roundLabel,
+    string $hrName,
     int $durationMinutes = 60
 ): array {
     $errorMessage = null;
@@ -221,6 +222,8 @@ function sendPanelAssignmentEmail(
     }
 
     try {
+        $safeHrName = trim($hrName) !== '' ? $hrName : (defined('SMTP_FROM_NAME') ? (string)SMTP_FROM_NAME : 'HR Team');
+        $mail->setFrom(SMTP_FROM_EMAIL, $safeHrName);
         $tz = new DateTimeZone(defined('APP_TIMEZONE') ? (string)APP_TIMEZONE : 'Asia/Kolkata');
         $startDateTime = DateTime::createFromFormat('Y-m-d H:i:s', $interviewDateTime, $tz) ?: new DateTime('now', $tz);
         $dateLabel = $startDateTime->format('d M Y');
@@ -496,14 +499,14 @@ function sendCandidateInterviewEmail(
         $timeLabel = $startDateTime->format('h:i A') . ' IST';
 
         $mail->addAddress($candidateEmail);
+        $safeHrName = trim($hrName) !== '' ? $hrName : 'HR Team';
+        $safeRoundLabel = trim($roundLabel) !== '' ? $roundLabel : 'L1 Round';
         $durationMinutes = 60;
         $endDateTime = clone $startDateTime;
         $endDateTime->modify('+' . max(15, $durationMinutes) . ' minutes');
         $dateRangeLabel = $startDateTime->format('l, F d Y, h:i A') . ' - ' . $endDateTime->format('h:i A') . ' IST';
         $mail->Subject = 'Invitation - ' . $safeRoundLabel . ' || ' . $candidateName . ' || ' . $position . ' || XTS World on ' . $dateRangeLabel;
         $mail->isHTML(true);
-        $safeHrName = trim($hrName) !== '' ? $hrName : 'HR Team';
-        $safeRoundLabel = trim($roundLabel) !== '' ? $roundLabel : 'L1 Round';
         $mail->Body = '<!doctype html><html><body style="margin:0;padding:0;background:#f3f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1f2937;">'
             . '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f5f9;padding:28px 12px;">'
             . '<tr><td align="center">'

@@ -76,6 +76,8 @@ try {
 
     $emailNotification = null;
     if ($panelEmail !== '') {
+        $roundLabel = $interviewStatus === 9 ? 'L2 Round' : 'L1 Round';
+        $hrName = defined('SMTP_FROM_NAME') ? (string)SMTP_FROM_NAME : 'HR Team';
         $emailNotification = sendPanelAssignmentEmail(
             $newInterviewId,
             intval($data->panel),
@@ -84,7 +86,9 @@ try {
             trim((string)($candidateInfo['Candidate_name'] ?? 'Candidate')),
             trim((string)($candidateInfo['Candidate_position'] ?? 'Position')),
             (string)$data->dateTime,
-            (string)$location
+            (string)$location,
+            $roundLabel,
+            $hrName
         );
     } else {
         $emailNotification = [
